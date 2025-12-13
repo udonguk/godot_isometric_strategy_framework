@@ -4,6 +4,51 @@
 
 ## 1. 기본 원칙 (General Principles)
 
+### 1.0. 씬 우선 개발 (Scene-First Development)
+
+**핵심**: 모든 기능은 **씬(.tscn) 파일로 먼저** 구현합니다.
+
+#### 개발 절차
+1. **씬 생성** (`scenes/` 폴더)
+   - Godot 에디터에서 씬 생성
+   - 필요한 노드 구조 구성
+
+2. **스크립트 작성** (`scripts/` 폴더)
+   - 씬에 연결할 로직 작성
+   - 노드 타입 상속 (예: `extends Camera2D`)
+
+3. **씬과 스크립트 연결**
+   - 에디터에서 스크립트 attach
+   - 노드 레퍼런스 설정 (`@onready`)
+
+#### 예시: 카메라 시스템
+
+```
+✅ 올바른 방법:
+1. scenes/camera/rts_camera.tscn 생성 (Camera2D 노드)
+2. scripts/camera/rts_camera.gd 작성 (extends Camera2D)
+3. 씬에 스크립트 연결
+4. test_map.tscn에서 인스턴스화
+
+❌ 잘못된 방법:
+- 스크립트만 작성 후 코드로 노드 생성
+  var cam = Camera2D.new()
+  add_child(cam)
+```
+
+#### 폴더 구조 규칙
+```
+scenes/camera/rts_camera.tscn    # 씬 파일
+scripts/camera/rts_camera.gd     # 스크립트 (같은 이름)
+```
+
+#### 장점
+- **재사용성**: 여러 씬에서 인스턴스화
+- **시각적 편집**: 에디터에서 노드 구조 확인
+- **Godot 철학**: "Everything is a Scene"
+
+---
+
 ### 1.1. Godot 표준 준수
 - Godot 공식 문서의 [GDScript 스타일 가이드](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html)를 따릅니다.
 - **네이밍 규칙**:

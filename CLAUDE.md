@@ -66,6 +66,72 @@ vampire-spread-isometric/
 - **스크립트 구성**: 모든 게임 스크립트는 `scripts/` 디렉토리에 위치
 - **씬-스크립트 연결**: main.gd 스크립트는 Node2D를 상속하며 표준 `_ready()` 및 `_process(delta)` 생명주기 메서드를 제공
 
+### 씬 우선 개발 원칙 (중요!)
+
+**핵심 원칙**: 새로운 기능 개발 시 **씬(.tscn) 생성을 우선**합니다
+
+#### 개발 순서
+
+1. **씬 생성** (scenes/ 폴더)
+   - 해당 기능의 노드 구조를 씬으로 만듦
+   - 예: `scenes/camera/rts_camera.tscn` (Camera2D 노드)
+
+2. **스크립트 작성** (scripts/ 폴더)
+   - 씬에 연결할 스크립트 작성
+   - 예: `scripts/camera/rts_camera.gd` (extends Camera2D)
+
+3. **씬에 스크립트 연결**
+   - Godot 에디터에서 씬 열기
+   - 루트 노드에 스크립트 attach
+
+#### ✅ 올바른 접근 (씬 기반)
+
+```
+예시: RTS 카메라 구현
+
+1. scenes/camera/rts_camera.tscn 생성
+   - Camera2D 노드 추가
+
+2. scripts/camera/rts_camera.gd 작성
+   extends Camera2D
+   # 카메라 로직...
+
+3. 씬에 스크립트 연결
+   - rts_camera.tscn 루트 노드에 rts_camera.gd attach
+
+4. 다른 씬에서 재사용
+   - test_map.tscn에서 "Instantiate Child Scene" → rts_camera.tscn
+```
+
+#### ❌ 피해야 할 접근 (스크립트만)
+
+```
+❌ 스크립트만 작성하고 씬 없이 코드로 인스턴스 생성
+   var camera = Camera2D.new()
+   add_child(camera)
+```
+
+#### 씬 생성이 필요한 경우
+
+**Claude Code가 다음 작업을 할 때 사용자에게 씬 생성 확인:**
+
+- [ ] 새로운 게임 오브젝트 추가 (캐릭터, 건물, UI 등)
+- [ ] 재사용 가능한 컴포넌트 생성
+- [ ] 새로운 시스템 추가 (카메라, 매니저 등)
+
+**확인 프로세스:**
+1. Claude가 씬 생성 필요성 파악
+2. 사용자에게 씬 생성 여부 문의
+3. 사용자 승인 후 Godot 에디터에서 씬 생성 안내
+4. 스크립트 작성 진행
+
+#### 장점
+
+- ✅ **재사용성**: 씬을 여러 곳에서 인스턴스화 가능
+- ✅ **가독성**: 노드 구조를 에디터에서 시각적으로 확인
+- ✅ **유지보수**: 씬 파일에서 노드 구조 수정 용이
+- ✅ **Godot 철학**: "씬이 모든 것의 기본" (Everything is a Scene)
+
 ### UI/Logic 분리 원칙 (중요!)
 
 **핵심 원칙**: 게임 로직은 텍스처 크기, 픽셀 단위에 **절대** 의존하지 않음
