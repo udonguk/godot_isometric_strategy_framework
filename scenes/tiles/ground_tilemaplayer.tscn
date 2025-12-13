@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://chfukxx3gn4tp"]
+
+[ext_resource type="TileSet" uid="uid://cty8ptyu67rpm" path="res://scenes/tiles/ground_tileset.tres" id="1_bf1m4"]
+
+[node name="GroundTileMapLayer" type="TileMapLayer"]
+y_sort_enabled = true
+tile_set = ExtResource("1_bf1m4")
+navigation_visibility_mode = 1

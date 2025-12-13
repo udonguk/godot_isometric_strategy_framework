@@ -80,6 +80,11 @@ Scene 구조:
 ```
 vampire-spread-isometric/
 ├── scenes/
+│   ├── tiles/                    # 타일 시스템 (소스코드)
+│   │   ├── ground_tileset.tres          # 바닥 TileSet 리소스
+│   │   ├── ground_tilemaplayer.tscn     # 바닥 TileMapLayer 씬 (Navigation 설정 포함)
+│   │   ├── road_tileset.tres            # 도로 TileSet (옵션)
+│   │   └── road_tilemaplayer.tscn       # 도로 TileMapLayer (옵션)
 │   ├── buildings/
 │   │   └── building.tscn         # 건물 씬 (단일 씬, 상태 관리)
 │   ├── maps/
@@ -99,25 +104,69 @@ vampire-spread-isometric/
 │   └── main.gd
 │
 ├── assets/
-│   ├── buildings/
-│   │   └── sprites/
-│   │       ├── building_normal.png      # 일반 상태
-│   │       ├── building_infecting.png   # 감염 중
-│   │       └── building_infected.png    # 감염 완료
-│   ├── tiles/
-│   │   └── tilesets/
-│   │       └── ground_tileset.tres      # 바닥 타일셋
-│   └── ...
+│   └── sprites/                  # 정적 자료 (이미지)
+│       ├── tiles/
+│       │   ├── ground.png               # 바닥 타일 스프라이트
+│       │   └── road.png                 # 도로 타일 스프라이트
+│       └── buildings/
+│           ├── building_normal.png      # 일반 상태
+│           ├── building_infecting.png   # 감염 중
+│           └── building_infected.png    # 감염 완료
 │
 └── resources/
     └── building_data.gd          # 건물 데이터 리소스
 ```
 
 **폴더 구분:**
-- `tiles/`: 바닥 타일 에셋 (TileMapLayer용)
-- `buildings/`: 상태를 가진 건물 (감염 대상)
-- `units/` (추후): 이동 가능한 유닛들
-- `config/`: 게임 설정 파일 (UI와 로직 분리)
+- `scenes/tiles/`: 타일 시스템 (소스코드)
+  - **TileSet (.tres)**: 타일 정의, Navigation Polygon 설정
+  - **TileMapLayer (.tscn)**: Navigation Layer 설정 포함, 재사용 가능
+- `assets/sprites/`: 정적 자료 (이미지만)
+  - 소스코드와 완전히 분리
+  - 이미지 파일만 위치
+- `scenes/buildings/`: 건물 씬 (감염 대상)
+- `scenes/maps/`: 맵 씬들
+- `scripts/`: 스크립트 파일들
+- `resources/`: 커스텀 리소스 클래스
+
+**TileSet과 TileMapLayer 한 쌍 관리:**
+- `ground_tileset.tres` ↔ `ground_tilemaplayer.tscn` (1:1 관계)
+- `scenes/tiles/` 폴더에 함께 위치
+- Navigation Layer 설정이 씬에 저장되어 재사용 가능
+
+**소스코드 vs 정적 자료 분리:**
+- 소스코드: `scenes/`, `scripts/`, `resources/`
+- 정적 자료: `assets/sprites/`
+
+### 5.1. Scene Instance Pattern (중요!)
+
+**TileMapLayer Factory 패턴 활용:**
+
+`ground_tilemaplayer.tscn`은 **Factory(템플릿)** 역할:
+- 공통 설정만 정의 (TileSet, Navigation Layer, Y-Sort 등)
+- 타일 배치는 **없음** (빈 템플릿)
+- 여러 맵에서 인스턴스화하여 사용
+
+**각 맵은 인스턴스 + Override:**
+```
+ground_tilemaplayer.tscn (Factory)
+├─ test_map.tscn (인스턴스 - 타일 배치 A)
+├─ level_01.tscn (인스턴스 - 타일 배치 B)
+└─ level_02.tscn (인스턴스 - 타일 배치 C)
+```
+
+**동작 방식:**
+1. Factory에서 공통 설정 관리
+2. 각 맵에서 `ground_tilemaplayer.tscn` 인스턴스화
+3. 타일 배치만 Override → 그 맵에만 저장됨
+4. Factory 수정 → 모든 맵에 자동 반영 (타일 배치 제외)
+
+**주의사항:**
+- ❌ Factory에 타일 배치하지 말 것 (빈 템플릿 유지)
+- ✅ 각 맵에서 타일 배치 (Override)
+- Unity의 "Apply to Prefab" 버튼은 없음 (단방향만)
+
+**자세한 내용**: `docs/design/godot_scene_instance_pattern.md` 참고
 
 ## 6. 건물 상태 시스템
 
@@ -154,9 +203,9 @@ const ISOMETRIC_RATIO = Vector2(2, 1)  # 아이소메트릭 비율
 
 # 스프라이트 경로 (에셋 교체 시 여기만 수정)
 const BUILDING_SPRITES = {
-    "normal": "res://assets/buildings/sprites/building_normal.png",
-    "infecting": "res://assets/buildings/sprites/building_infecting.png",
-    "infected": "res://assets/buildings/sprites/building_infected.png"
+    "normal": "res://assets/sprites/buildings/building_normal.png",
+    "infecting": "res://assets/sprites/buildings/building_infecting.png",
+    "infected": "res://assets/sprites/buildings/building_infected.png"
 }
 ```
 
@@ -259,6 +308,354 @@ func create_building(grid_pos: Vector2i) -> Building:
 - 로직은 항상 `grid_pos` 사용
 - 화면 표시는 `GridSystem.grid_to_world()` 사용
 - 텍스처 크기 변경 시 `GridSystem`과 `GameConfig`만 수정
+
+### 7.3. Diamond Right 레이아웃 설정
+
+**TileMapLayer 설정:**
+- **Layout**: Diamond Right (Godot TileMap 설정)
+- **타일 배치**: 다이아몬드(마름모) 형태
+
+**Diamond Right 구조:**
+```
+       (0,0)
+      /    \
+  (0,1)    (1,0)
+    /  \  /  \
+(0,2) (1,1) (2,0)
+  \  /  \  /  \
+  (1,2) (2,1) (3,0)
+```
+
+#### 시작 좌표 설정
+
+**1. 그리드 좌표 (로직 레벨)**
+
+항상 **(0, 0)부터 시작**:
+```gdscript
+# 5x5 맵 생성
+for x in range(5):
+    for y in range(5):
+        create_building(Vector2i(x, y))  # (0,0)부터 시작
+```
+
+**이유:**
+- 로직이 단순함
+- 배열 인덱스와 일치
+- 음수 좌표 처리 불필요
+
+**2. 월드 좌표 (화면 표시 레벨)**
+
+화면 중앙 또는 카메라 기준으로 배치:
+
+```gdscript
+# scenes/maps/test_map.tscn의 스크립트
+extends Node2D
+
+func _ready():
+    # TileMapLayer 위치 설정
+    var tilemap = $TileMapLayer
+
+    # 화면 상단-중앙에 배치
+    tilemap.position = Vector2(
+        get_viewport_rect().size.x / 2,  # 화면 가로 중앙
+        100  # 위에서 100픽셀 아래
+    )
+
+    # BuildingLayer도 같은 기준점 사용
+    var building_layer = $BuildingLayer
+    building_layer.position = tilemap.position
+```
+
+#### 맵 크기별 권장 설정
+
+**테스트 맵:**
+```gdscript
+const TEST_MAP_SIZE = Vector2i(5, 5)  # 또는 7x7
+
+# 화면 배치
+tilemap.position = Vector2(
+    get_viewport_rect().size.x / 2,
+    100
+)
+```
+
+**실제 레벨:**
+```gdscript
+const LEVEL_MAP_SIZE = Vector2i(50, 50)  # 큰 맵
+
+# 카메라 중심 설정
+var camera = $Camera2D
+var center_tile = Vector2i(25, 25)  # 맵 중앙
+camera.position = GridSystem.grid_to_world(center_tile)
+```
+
+#### TileMapLayer와 BuildingLayer 정렬
+
+**중요**: 두 레이어가 같은 기준점을 사용해야 함
+
+```gdscript
+# 씬 구조
+Node2D (맵 루트)
+├── TileMapLayer (바닥)
+│   └── position = Vector2(400, 100)
+└── BuildingLayer (건물들)
+    └── position = Vector2(400, 100)  # TileMap과 동일!
+```
+
+**좌표 일치 확인:**
+```gdscript
+# 그리드 (2, 3) 위치가 두 레이어에서 같은 월드 좌표여야 함
+var grid_pos = Vector2i(2, 3)
+var world_pos = GridSystem.grid_to_world(grid_pos)
+
+# TileMap의 타일과 Building이 정확히 겹쳐야 함
+```
+
+### 7.4. Navigation Layers (경로 찾기 및 유닛 이동)
+
+**Godot 내장 기능 활용** - 경로 찾기를 위한 최적의 방법
+
+#### 개요
+
+Navigation Layers는 Godot의 내장 네비게이션 시스템으로, 다음을 자동으로 제공합니다:
+- ✅ A* 경로 찾기 알고리즘
+- ✅ 성능 최적화된 구현
+- ✅ 타일셋 에디터에서 시각적 설정
+- ✅ 여러 레이어로 유닛 타입 구분 (지상/공중 등)
+
+#### 설정 방법 (Godot 에디터)
+
+**Step 1: TileSet 리소스 생성 (ground_tileset.tres)**
+
+```
+Godot 에디터:
+1. FileSystem → scenes/tiles/ 우클릭
+2. "Create New" → "TileSet"
+3. 이름: ground_tileset.tres
+4. TileSet 에디터 열기
+5. 타일 스프라이트 추가
+   - 경로: assets/sprites/tiles/ground.png
+6. Navigation 탭 → Navigation Polygon 그리기
+   - 일반 지면: 전체 타일에 Polygon
+   - 도로: 전체 타일에 Polygon (빠른 이동)
+   - 장애물: Navigation 없음
+7. 저장
+```
+
+**Step 2: TileMapLayer 씬 생성 (ground_tilemaplayer.tscn)**
+
+```
+Godot 에디터:
+1. Scene → New Scene
+2. Other Node → TileMapLayer 선택
+3. Inspector에서 설정:
+   - Tile Set: scenes/tiles/ground_tileset.tres 할당
+   - Navigation → Enabled: true
+   - Navigation Layers 추가:
+     * Layer 0: "Ground" (지상 유닛)
+     * Layer 1: "Vehicle" (옵션)
+4. Scene → Save Scene As
+   - 위치: scenes/tiles/ground_tilemaplayer.tscn
+5. 저장
+```
+
+**중요:** 타일 배치하지 말 것! Factory는 빈 템플릿으로 유지
+
+**Step 3: 맵에서 사용 (인스턴스화)**
+
+```
+test_map.tscn (scenes/maps/test_map.tscn):
+1. MapRoot (Node2D)에 자식 추가
+2. "Instantiate Child Scene" 클릭
+3. scenes/tiles/ground_tilemaplayer.tscn 선택
+4. 이름: GroundTileMapLayer
+5. 타일 배치 시작!
+```
+
+**결과:**
+- Navigation 설정이 씬에 저장됨
+- 다른 맵에서도 ground_tilemaplayer.tscn 재사용 가능 (인스턴스화)
+- 각 맵의 타일 배치는 Override로 저장됨
+- 매번 Navigation 설정 불필요!
+
+**Scene Instance Pattern 활용:**
+- Factory: ground_tilemaplayer.tscn (공통 설정)
+- Instance: test_map.tscn, level_01.tscn 등 (타일 배치만)
+- 자세한 내용: `docs/design/godot_scene_instance_pattern.md`
+
+#### 씬 구조
+
+```
+Node2D (MapRoot)
+├── TileMapLayer (바닥, Navigation Layers 포함)
+│   └── TileSet에 Navigation 설정됨
+├── BuildingLayer (Node2D)
+│   └── Building 인스턴스들
+│       └── NavigationObstacle2D (건물이 경로 막음)
+└── UnitLayer (Node2D)
+    └── Unit 인스턴스들
+        └── NavigationAgent2D (경로 찾기)
+```
+
+#### 유닛 이동 구현
+
+**NavigationAgent2D 사용:**
+
+```gdscript
+# scripts/units/unit.gd
+extends CharacterBody2D  # 물리 이동용
+class_name Unit
+
+@onready var nav_agent: NavigationAgent2D = $NavigationAgent2D
+
+var grid_position: Vector2i
+var move_speed: float = 100.0
+
+func _ready():
+    # NavigationAgent 설정
+    nav_agent.path_desired_distance = 4.0
+    nav_agent.target_desired_distance = 4.0
+
+    # Navigation Layer 설정 (지상 유닛)
+    nav_agent.set_navigation_layers(1)  # Layer 0 = bit 1
+
+# 그리드 좌표로 이동 명령 (UI/Logic 분리 유지)
+func move_to_grid(target_grid: Vector2i):
+    # 그리드 → 월드 좌표 변환
+    var target_world = GridSystem.grid_to_world(target_grid)
+
+    # NavigationAgent에 목표 설정 (자동 경로 찾기)
+    nav_agent.target_position = target_world
+    grid_position = target_grid
+
+func _physics_process(delta):
+    # 목적지 도착 확인
+    if nav_agent.is_navigation_finished():
+        return
+
+    # 다음 경로 지점 가져오기
+    var next_path_pos = nav_agent.get_next_path_position()
+    var direction = (next_path_pos - global_position).normalized()
+
+    # 이동
+    velocity = direction * move_speed
+    move_and_slide()
+```
+
+#### 동적 장애물 (건물 배치 시)
+
+**건물이 생길 때 경로 막기:**
+
+```gdscript
+# scenes/buildings/building.tscn
+Building (Sprite2D)
+└── NavigationObstacle2D  # 씬에 미리 추가
+    └── radius: 16.0  # 타일 크기의 절반
+
+# scripts/buildings/building.gd
+extends Sprite2D
+class_name Building
+
+@onready var nav_obstacle: NavigationObstacle2D = $NavigationObstacle2D
+
+func _ready():
+    # 장애물 활성화
+    nav_obstacle.avoidance_enabled = true
+
+    # 상태에 따라 장애물 on/off
+    if state == BuildingState.INFECTED:
+        nav_obstacle.avoidance_enabled = false  # 감염되면 통과 가능 (옵션)
+```
+
+**또는 TileMap 동적 업데이트:**
+
+```gdscript
+# scripts/buildings/building_manager.gd
+func create_building(grid_pos: Vector2i) -> Building:
+    var building = BUILDING_SCENE.instantiate()
+    # ... 건물 생성
+
+    # 해당 위치의 네비게이션 타일 제거
+    update_navigation_at(grid_pos, false)
+
+    return building
+
+func update_navigation_at(grid_pos: Vector2i, enabled: bool):
+    var tilemap = get_node("../TileMapLayer")
+
+    if not enabled:
+        # 타일 제거 (네비게이션도 제거됨)
+        tilemap.erase_cell(0, grid_pos)
+    else:
+        # 타일 복원
+        tilemap.set_cell(0, grid_pos, 0, Vector2i(0, 0))
+```
+
+#### 그리드 메타데이터와 병행 사용
+
+**Navigation Layers + 그리드 메타데이터 조합:**
+
+```gdscript
+# scripts/map/grid_system.gd
+static var grid_metadata: Dictionary = {}
+
+class TileMetadata:
+    var buildable: bool = true  # 건물 배치 가능 여부
+    var tile_type: TileType
+    # walkable은 Navigation이 처리하므로 불필요
+
+enum TileType {
+    GROUND,      # 일반 지면
+    ROAD,        # 도로 (전파 빠름)
+    OBSTACLE     # 장애물
+}
+
+# 건물 배치 가능 여부만 체크
+static func is_buildable(grid_pos: Vector2i) -> bool:
+    if grid_metadata.has(grid_pos):
+        return grid_metadata[grid_pos].buildable
+    return true
+
+# 경로 찾기는 NavigationAgent가 자동 처리
+```
+
+#### 전파 속도 가중치 적용
+
+```gdscript
+# scripts/map/spread_logic.gd
+func get_spread_multiplier(grid_pos: Vector2i) -> float:
+    var multiplier = 1.0
+
+    # 타일 타입에 따른 전파 속도
+    var tile_type = GridSystem.get_tile_type(grid_pos)
+    match tile_type:
+        GridSystem.TileType.ROAD:
+            multiplier *= 1.5  # 도로는 50% 빠른 전파
+        GridSystem.TileType.OBSTACLE:
+            multiplier = 0.0   # 장애물은 전파 불가
+
+    # 인접 감염 건물 수에 따른 가중치
+    var neighbor_count = get_infected_neighbor_count(grid_pos)
+    multiplier *= get_neighbor_multiplier(neighbor_count)
+
+    return multiplier
+```
+
+#### 장점 요약
+
+| 기능 | 수동 구현 | Navigation Layers |
+|------|----------|-------------------|
+| 경로 찾기 | 직접 A* 구현 | ✅ 자동 제공 |
+| 성능 | 최적화 필요 | ✅ 최적화됨 |
+| 동적 장애물 | 직접 처리 | ✅ NavigationObstacle2D |
+| 디버깅 | 어려움 | ✅ 에디터에서 시각화 |
+| 복잡도 | 높음 | ✅ 낮음 |
+
+#### 주의사항
+
+- **UI/Logic 분리 유지**: 이동 명령은 그리드 좌표 사용, 내부적으로만 월드 좌표 변환
+- **Navigation 업데이트**: 건물 배치/제거 시 네비게이션 정보 갱신 필요
+- **Layer 비트 마스크**: `set_navigation_layers(1 << 0)` = Layer 0, `1 << 1` = Layer 1
 
 ## 8. 전파 로직 (PRD 2.2 연계)
 
