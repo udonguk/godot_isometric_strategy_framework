@@ -31,6 +31,8 @@ Godot 프로젝트는 전통적인 빌드/테스트 명령어가 없으며, Godo
 ```
 vampire-spread-isometric/
 ├── docs/            # 기획 및 디자인 문서 (애자일 구조)
+│   ├── design/      # [Design Docs] 시스템 설계 문서
+│   │   └── tile_system_design.md  # 타일 시스템 설계 (UI/Logic 분리 원칙 포함)
 │   ├── game_design.md # [Living Doc] 게임 기획서 (계속 업데이트)
 │   ├── prd.md       # [Living Doc] 핵심 기능 명세서 (계속 업데이트)
 │   ├── backlog.md   # [Artifact] 제품 백로그 (전체 할 일)
@@ -39,7 +41,9 @@ vampire-spread-isometric/
 │   └── archive/     # [Archive] 폐기되거나 오래된 문서
 ├── scripts/          # GDScript 파일들
 │   └── main.gd      # 메인 씬 스크립트 (Node2D 상속)
-├── main.tscn        # 메인 씬 파일
+├── scenes/          # Godot 씬 파일들
+│   └── main.tscn    # 메인 씬 파일
+├── assets/          # 게임 에셋 (스프라이트, 타일셋 등)
 ├── icon.svg         # 프로젝트 아이콘
 ├── project.godot    # Godot 프로젝트 설정
 └── .godot/          # Godot 에디터 캐시 및 메타데이터 (git 무시)
@@ -50,6 +54,17 @@ vampire-spread-isometric/
 - **메인 씬**: `main.tscn`은 간단한 Node2D 루트 노드를 포함
 - **스크립트 구성**: 모든 게임 스크립트는 `scripts/` 디렉토리에 위치
 - **씬-스크립트 연결**: main.gd 스크립트는 Node2D를 상속하며 표준 `_ready()` 및 `_process(delta)` 생명주기 메서드를 제공
+
+### UI/Logic 분리 원칙 (중요!)
+
+**핵심 원칙**: 게임 로직은 텍스처 크기, 픽셀 단위에 **절대** 의존하지 않음
+
+- **로직**: 항상 그리드 좌표(`Vector2i`) 기반으로 작성
+- **비주얼**: 텍스처 크기, 색상 등은 `scripts/config/game_config.gd`에 분리
+- **변환**: 그리드 ↔ 월드 좌표 변환은 `scripts/map/grid_system.gd`에서만 처리
+- **결과**: 텍스처 크기를 32x32에서 64x64로 변경해도 로직 수정 불필요
+
+**자세한 내용**: `docs/design/tile_system_design.md`의 "3. 핵심 설계 원칙" 참고
 
 ## GDScript 규칙
 
