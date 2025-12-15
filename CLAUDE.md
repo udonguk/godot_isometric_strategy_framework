@@ -43,18 +43,24 @@ vampire-spread-isometric/
 │   ├── tiles/       # 타일 시스템 (TileSet + TileMapLayer 한 쌍으로 관리)
 │   │   ├── ground_tileset.tres       # TileSet 리소스
 │   │   └── ground_tilemaplayer.tscn  # TileMapLayer 씬 (Navigation 설정 포함)
-│   ├── buildings/   # 건물 씬들
+│   ├── entity/      # 맵 위에 배치되는 모든 엔티티
+│   │   ├── building_entity.tscn      # 건물 엔티티
+│   │   └── tree_entity.tscn          # 나무 엔티티 (예정)
+│   ├── camera/      # 카메라 시스템
 │   ├── maps/        # 맵 씬들
 │   └── main.tscn    # 메인 씬
 ├── scripts/         # GDScript 파일들 (소스코드)
 │   ├── config/      # 게임 설정
-│   ├── buildings/   # 건물 로직
+│   ├── entity/      # 엔티티 로직
+│   │   ├── base_entity.gd            # 공통 엔티티 로직 (예정)
+│   │   └── building_entity.gd        # 건물 전용 로직 (예정)
+│   ├── camera/      # 카메라 로직
 │   ├── map/         # 맵/그리드 시스템
 │   └── main.gd
 ├── assets/          # 정적 자료 (이미지만)
 │   └── sprites/
 │       ├── tiles/           # 타일 스프라이트
-│       └── buildings/       # 건물 스프라이트
+│       └── entity/          # 엔티티 스프라이트 (건물, 나무 등)
 ├── icon.svg         # 프로젝트 아이콘
 ├── project.godot    # Godot 프로젝트 설정
 └── .godot/          # Godot 에디터 캐시 및 메타데이터 (git 무시)

@@ -11,8 +11,13 @@ config_version=5
 [application]
 
 config/name="vampire_spread_isometric"
+run/main_scene="uid://bb75enebrksx6"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+GameConfig="*res://scripts/config/game_config.gd"
 
 [display]
 
