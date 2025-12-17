@@ -9,8 +9,9 @@ extends Node
 
 ## 타일 크기 (픽셀 단위)
 ## 주의: 이 값은 GameConfig의 TILE_SIZE와 동기화되어야 함
+## Diamond Right 아이소메트릭: 타일의 실제 크기는 32x16 (가로x세로)
 const TILE_WIDTH: int = 32
-const TILE_HEIGHT: int = 32
+const TILE_HEIGHT: int = 16
 
 
 # ============================================================

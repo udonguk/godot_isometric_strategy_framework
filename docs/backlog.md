@@ -95,13 +95,13 @@
 **목표**: GridSystem을 활용해 건물을 그리드 좌표로 배치
 **완료 기준**: (0,0), (1,0), (0,1) 위치에 건물 3개 정확히 배치됨
 
-- [ ] building_entity.gd에 `grid_position: Vector2i` 속성 추가
-- [ ] test_map.gd 생성 (또는 main.gd 수정)
+- [x] building_entity.gd에 `grid_position: Vector2i` 속성 추가
+- [x] test_map.gd 생성 (또는 main.gd 수정)
   - `_ready()`에서 건물 3개를 수동으로 배치
   - 각 건물의 position을 `GridSystem.grid_to_world()`로 설정
   - 그리드 좌표를 화면에 Label로 표시 (디버그용 - 옵션)
-- [ ] 실행 후 건물 위치가 그리드에 맞게 배치되는지 확인
-- [ ] Step 2에서 구현한 클릭 기능으로 각 건물의 그리드 좌표 확인
+- [x] 실행 후 건물 위치가 그리드에 맞게 배치되는지 확인
+- [x] Step 2에서 구현한 클릭 기능으로 각 건물의 그리드 좌표 확인
 
 ---
 

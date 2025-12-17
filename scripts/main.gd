@@ -15,6 +15,14 @@ const GridSystem = preload("res://scripts/map/grid_system.gd")
 
 
 # ============================================================
+# 노드 참조
+# ============================================================
+
+## GroundTileMapLayer 참조 (좌표 변환용)
+@onready var ground_layer: TileMapLayer = $test_map_Node2D/GroundTileMapLayer
+
+
+# ============================================================
 # 테스트 변수
 # ============================================================
 
@@ -89,10 +97,13 @@ func _on_empty_click(screen_pos: Vector2) -> void:
 	# 화면 좌표 → 월드 좌표 변환
 	var world_pos: Vector2 = get_global_mouse_position()
 
-	# 월드 좌표 → 그리드 좌표 변환
-	var grid_pos: Vector2i = GridSystem.world_to_grid(world_pos)
+	# 월드 좌표 → 그리드 좌표 변환 (TileMapLayer 사용)
+	var grid_pos: Vector2i = ground_layer.local_to_map(world_pos)
 
-	print("[Main] 빈 공간 클릭 - Grid: ", grid_pos)
+	# 디버그: GridSystem과 TileMapLayer 좌표 비교
+	var grid_system_pos: Vector2i = GridSystem.world_to_grid(world_pos)
+	print("[Main] 빈 공간 클릭 - World: ", world_pos)
+	print("  → TileMapLayer Grid: ", grid_pos, " | GridSystem Grid: ", grid_system_pos)
 
 	# 빈 공간 클릭 시 선택 해제
 	_deselect_building()
