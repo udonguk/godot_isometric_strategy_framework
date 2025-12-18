@@ -86,6 +86,17 @@ Godot 개발 효율성과 유지보수를 위해 다음 패턴 사용을 권장�
 - **Godot 구현**: 프로젝트 설정의 **Autoload** 기능을 사용합니다.
 - **주의**: 과도한 사용은 의존성을 높이므로 꼭 필요한 전역 관리에만 사용합니다.
 
+#### Autoload 사용 규칙 (중요!)
+1. **Autoload 이름 충돌 방지 (Shadowing 금지)**
+   - Autoload로 등록된 이름(예: `GridSystem`)과 동일한 이름으로 `preload()`하거나 변수를 선언하지 않습니다.
+   - **❌ 잘못된 예**: `const GridSystem = preload(...)` (전역 싱글톤을 가려버림 -> 오류 발생)
+   - **✅ 올바른 예**: Autoload 이름은 전역에서 바로 접근 가능하므로 `preload` 없이 사용
+
+2. **명확한 타입 구분 (class_name)**
+   - Autoload 스크립트에는 `class_name`을 지정하되, Autoload 이름과 다르게 짓습니다.
+   - 예: Autoload 이름이 `GridSystem`이라면, 스크립트 내 `class_name`은 `GridSystemNode`로 지정
+   - 이렇게 하면 Godot 파서가 **싱글톤 인스턴스**와 **스크립트 타입**을 명확히 구분할 수 있습니다.
+
 ## 3. 정적 타이핑 (Static Typing)
 
 모든 변수와 함수에 타입을 명시하여 코드의 안정성과 가독성을 높입니다.

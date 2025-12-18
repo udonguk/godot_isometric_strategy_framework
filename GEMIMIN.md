@@ -1,10 +1,11 @@
-# CLAUDE.md
+# GEMIMIN.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Gemini when working with code in this repository.
 
 ## 기본 규칙
 
-- **언어**: 모든 답변과 설명은 항상 **한국어**로 작성합니다.
+- **언어**: 모든 답변과 설명은 항상 **한국어**로 작성합니다. (Very Important!)
+- **커밋 관련 규칙**: `git commit`은 사용자가 명시적으로 요청할 때만 진행합니다.
 
 ## 프로젝트 개요
 
@@ -119,14 +120,14 @@ vampire-spread-isometric/
 
 #### 씬 생성이 필요한 경우
 
-**Claude Code가 다음 작업을 할 때 사용자에게 씬 생성 확인:**
+**Gemini가 다음 작업을 할 때 사용자에게 씬 생성 확인:**
 
 - [ ] 새로운 게임 오브젝트 추가 (캐릭터, 건물, UI 등)
 - [ ] 재사용 가능한 컴포넌트 생성
 - [ ] 새로운 시스템 추가 (카메라, 매니저 등)
 
 **확인 프로세스:**
-1. Claude가 씬 생성 필요성 파악
+1. Gemini가 씬 생성 필요성 파악
 2. 사용자에게 씬 생성 여부 문의
 3. 사용자 승인 후 Godot 에디터에서 씬 생성 안내
 4. 스크립트 작성 진행
@@ -526,53 +527,7 @@ func handle_ui()        # UI
 
 ### Autoload 싱글톤 접근 규칙 (중요!)
 
-**Godot의 Autoload는 씬 트리에 있는 노드만 접근 가능합니다!**
-
-**❌ 잘못된 예 (접근 불가):**
-```gdscript
-# test_map.gd
-var building_manager = BuildingManager.new()  # 생성만 함
-# add_child() 없음! ← 문제!
-building_manager.initialize()
-
-# building_manager.gd
-func create_building(grid_pos):
-    var world_pos = GridSystem.grid_to_world(grid_pos)  # ❌ 에러!
-    # Error: Identifier "GridSystem" not declared in the current scope
-```
-
-**✅ 올바른 예 (접근 가능):**
-```gdscript
-# test_map.gd
-var building_manager = BuildingManager.new()
-add_child(building_manager)  # 씬 트리에 추가! ← 핵심!
-building_manager.initialize()
-
-# building_manager.gd
-func create_building(grid_pos):
-    var world_pos = GridSystem.grid_to_world(grid_pos)  # ✅ 정상 작동!
-```
-
-**규칙:**
-1. ✅ 매니저/시스템을 `new()`로 생성 후 **반드시 `add_child()`**
-2. ✅ 씬 트리에 추가해야 Autoload 싱글톤 접근 가능
-3. ✅ `add_child()` 없으면 "not declared in the current scope" 에러 발생
-
-**씬 트리 구조:**
-```
-[Root]
-├─ /root/GameConfig (Autoload)
-├─ /root/GridSystem (Autoload)
-├─ TestMap
-│   ├─ BuildingManager ← add_child()로 추가됨
-│   └─ ...
-```
-
-**Autoload 사용 시 주의사항:**
-- ❌ `const GridSystem = preload(...)` 하지 마세요!
-- ❌ `var grid_system = GridSystem.new()` 하지 마세요!
-- ✅ 그냥 `GridSystem`으로 바로 접근하세요!
-- ✅ 단, **씬 트리에 있는 노드에서만** 접근 가능!
+이 규칙은 `docs/code_convention.md`의 "2.3. 싱글톤 패턴 (Singleton Pattern / Autoload)" 섹션을 참조하십시오. Autoload 사용 시 발생할 수 있는 이름 충돌(Shadowing) 문제 및 `class_name` 사용 권장 사항 등 상세 규칙이 설명되어 있습니다.
 
 ---
 

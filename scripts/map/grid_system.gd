@@ -1,43 +1,57 @@
 extends Node
+class_name GridSystemNode
 
-## 그리드 시스템
-## 그리드 좌표 ↔ 월드 좌표 변환 (Diamond Right Isometric)
-
-# ============================================================
-# 그리드 설정
-# ============================================================
-
-## 타일 크기 (픽셀 단위)
-## 주의: 이 값은 GameConfig의 TILE_SIZE와 동기화되어야 함
-## Diamond Right 아이소메트릭: 타일의 실제 크기는 32x16 (가로x세로)
-const TILE_WIDTH: int = 32
-const TILE_HEIGHT: int = 16
-
+## 그리드 시스템 (Autoload 싱글톤)
+## 모든 그리드 좌표 ↔ 월드 좌표 변환을 담당
+##
+## SOLID 원칙 준수:
+## - Single Responsibility: 모든 좌표 변환 책임을 GridSystem이 담당
+## - Dependency Inversion: 다른 매니저들은 TileMapLayer 대신 GridSystem에 의존
+## - Open/Closed: TileMapLayer 변경 시 GridSystem만 수정하면 됨
 
 # ============================================================
-# 좌표 변환 함수 (Static)
+# 그리드 레퍼런스
+# ============================================================
+
+## 그라운드 TileMapLayer 참조
+## 모든 entity는 ground 타일을 기준으로 배치됨
+var ground_layer: TileMapLayer = null
+
+
+# ============================================================
+# 초기화
+# ============================================================
+
+## GridSystem 초기화
+## 게임 시작 시 test_map.gd에서 호출해야 함
+func initialize(tile_layer: TileMapLayer) -> void:
+	ground_layer = tile_layer
+	print("[GridSystem] 초기화 완료 - Ground Layer: ", tile_layer.name)
+	print("[GridSystem] TileSet: ", tile_layer.tile_set)
+
+
+# ============================================================
+# 좌표 변환 함수 (TileMapLayer 기준)
 # ============================================================
 
 ## 그리드 좌표 → 월드 좌표 변환
-## Diamond Right 아이소메트릭 공식 사용
-static func grid_to_world(grid_pos: Vector2i) -> Vector2:
-	var world_x: float = (grid_pos.x - grid_pos.y) * (TILE_WIDTH / 2.0)
-	var world_y: float = (grid_pos.x + grid_pos.y) * (TILE_HEIGHT / 2.0)
-	return Vector2(world_x, world_y)
+## TileMapLayer.map_to_local()을 사용하여 정확한 좌표 계산
+func grid_to_world(grid_pos: Vector2i) -> Vector2:
+	if not ground_layer:
+		push_error("[GridSystem] ground_layer가 초기화되지 않았습니다! initialize()를 먼저 호출하세요.")
+		return Vector2.ZERO
+
+	return ground_layer.map_to_local(grid_pos)
 
 
 ## 월드 좌표 → 그리드 좌표 변환
-## 역변환 공식 사용
-static func world_to_grid(world_pos: Vector2) -> Vector2i:
-	# 정규화된 좌표 계산
-	var normalized_x: float = world_pos.x / (TILE_WIDTH / 2.0)
-	var normalized_y: float = world_pos.y / (TILE_HEIGHT / 2.0)
+## TileMapLayer.local_to_map()을 사용하여 정확한 좌표 계산
+func world_to_grid(world_pos: Vector2) -> Vector2i:
+	if not ground_layer:
+		push_error("[GridSystem] ground_layer가 초기화되지 않았습니다! initialize()를 먼저 호출하세요.")
+		return Vector2i.ZERO
 
-	# 그리드 좌표 계산
-	var grid_x: int = int(floor((normalized_x + normalized_y) / 2.0))
-	var grid_y: int = int(floor((normalized_y - normalized_x) / 2.0))
-
-	return Vector2i(grid_x, grid_y)
+	return ground_layer.local_to_map(world_pos)
 
 
 # ============================================================

@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=4 uid="uid://d1kb5y5eg0gjg"]
+
+[ext_resource type="PackedScene" uid="uid://chfukxx3gn4tp" path="res://scenes/tiles/ground_tilemaplayer.tscn" id="1_ybdod"]
+[ext_resource type="PackedScene" uid="uid://bqvuej70ij3wt" path="res://scenes/tiles/structures_tilemaplayer.tscn" id="2_2s55i"]
+[ext_resource type="Script" uid="uid://bhvy0odyl0tr" path="res://scripts/maps/test_map.gd" id="3_test_map"]
+
+[node name="test_map_Node2D" type="Node2D"]
+y_sort_enabled = true
+script = ExtResource("3_test_map")
+
+[node name="GroundTileMapLayer" parent="." instance=ExtResource("1_ybdod")]
+tile_map_data = PackedByteArray("AAAAAAEAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAMAAAAAAAAAAAABAAEAAAAAAAAAAAABAAIAAAAAAAAAAAABAAMAAAAAAAAAAAACAAEAAAAAAAAAAAACAAIAAAAAAAAAAAACAAMAAAAAAAAAAAADAAEAAAAAAAAAAAADAAIAAAAAAAAAAAADAAMAAAAAAAAAAAAEAAEAAAAAAAAAAAAEAAIAAAAAAAAAAAAEAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAACAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA=")
+
+[node name="StructuresTileMapLayer" parent="." instance=ExtResource("2_2s55i")]
+
+[node name="Buildings" type="Node2D" parent="."]
+y_sort_enabled = true

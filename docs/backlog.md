@@ -109,10 +109,10 @@
 **목표**: 여러 건물을 자동으로 생성
 **완료 기준**: 3x3 그리드에 9개 건물이 자동 배치됨
 
-- [ ] `scripts/buildings/building_manager.gd` 생성
-  - `grid_buildings: Dictionary` (Vector2i → Building 매핑)
-  - `create_building(grid_pos: Vector2i) -> Building` 함수
-  - `get_building(grid_pos: Vector2i) -> Building` 함수
+- [ ] `scripts/managers/building_manager.gd` 생성
+  - `grid_buildings: Dictionary` (Vector2i → BuildingEntity 매핑)
+  - `create_building(grid_pos: Vector2i) -> BuildingEntity` 함수
+  - `get_building(grid_pos: Vector2i) -> BuildingEntity` 함수
 - [ ] test_map.gd 수정
   - BuildingManager 인스턴스 생성
   - 이중 for문으로 3x3 건물 생성
