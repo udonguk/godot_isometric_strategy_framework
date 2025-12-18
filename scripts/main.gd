@@ -10,8 +10,8 @@ extends Node2D
 ## BuildingEntity 스크립트 참조
 const BuildingEntity = preload("res://scripts/entity/building_entity.gd")
 
-## GridSystem 스크립트 참조
-const GridSystem = preload("res://scripts/map/grid_system.gd")
+## GridSystem은 Autoload 싱글톤이므로 preload 불필요!
+## 전역적으로 GridSystem으로 바로 접근 가능
 
 
 # ============================================================
@@ -47,6 +47,13 @@ var selected_building = null
 func _ready() -> void:
 	# main 그룹 등록 (건물에서 이벤트를 전달받기 위해)
 	add_to_group("main")
+
+	# GridSystem 초기화 (Autoload 싱글톤)
+	# get_node()로 명시적 접근 (Autoload 인식 문제 우회)
+	if ground_layer:
+		GridSystem.initialize(ground_layer)
+	else:
+		push_warning("[Main] GroundTileMapLayer를 찾을 수 없어 GridSystem 초기화를 건너뜁니다.")
 
 	print("[Main] 게임 시작")
 	print("[Main] 스페이스바를 눌러 모든 건물의 상태를 변경하세요")
