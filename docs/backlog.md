@@ -204,6 +204,146 @@
 
 ---
 
+### 🎯 Phase 7: NPC 시스템 (계획)
+
+#### Step 7.1: NPCEntity 기본 구조
+**목표**: 자율적으로 움직이는 NPC 엔티티 생성
+**완료 기준**: NPC가 자동으로 지정된 경로를 이동
+
+- [ ] `scenes/entity/npc_entity.tscn` 생성
+  - NPCEntity (CharacterBody2D) 루트 노드
+  - NavigationAgent2D 추가
+  - Sprite2D 추가 (NPC 비주얼)
+  - CollisionShape2D 추가
+- [ ] `scripts/entity/npc_entity.gd` 생성
+  - `extends CharacterBody2D`
+  - `class_name NPCEntity`
+  - `speed: float` 변수
+  - `move_to(target: Vector2)` 함수
+  - `_physics_process(delta)` 구현 (UnitEntity와 유사)
+- [ ] 테스트
+  - test_map.tscn에 NPC 배치
+  - 자동으로 이동하는지 확인
+
+---
+
+#### Step 7.2: AI State Machine 구현
+**목표**: 행동 패턴을 전환할 수 있는 상태 머신
+**완료 기준**: NPC가 상태에 따라 다르게 행동
+
+- [ ] `scripts/ai/npc_state_machine.gd` 생성
+  - State enum (IDLE, PATROL, WANDER, GOTO)
+  - `current_state: State` 변수
+  - `change_state(new_state: State)` 함수
+- [ ] NPCEntity에 State Machine 통합
+  - `state_machine: NPCStateMachine` 추가
+  - 상태별 `_process(delta)` 로직 분기
+- [ ] 테스트
+  - 상태 전환 시 행동 변경 확인
+
+---
+
+#### Step 7.3: Patrol (순찰) 패턴 구현
+**목표**: 정해진 경로를 반복하는 순찰 패턴
+**완료 기준**: NPC가 A → B → C → A 순환
+
+- [ ] PathPoints 시스템 구현
+  - `patrol_points: Array[Vector2]` 변수
+  - `current_point_index: int` 변수
+  - `get_next_patrol_point()` 함수
+- [ ] Patrol 상태 로직 구현
+  - 목표 도착 시 다음 포인트로 이동
+  - 마지막 포인트 도착 시 처음으로 복귀
+- [ ] 테스트
+  - 3개 포인트를 순환하는 NPC 배치
+  - 무한 반복 확인
+
+---
+
+#### Step 7.4: Wander (배회) 패턴 구현
+**목표**: 랜덤하게 돌아다니는 배회 패턴
+**완료 기준**: NPC가 맵을 자유롭게 배회
+
+- [ ] Wander 로직 구현
+  - 랜덤 목표 위치 생성 (GridSystem 활용)
+  - `is_valid_navigation_position()` 검증
+  - 도착 시 새 랜덤 위치 선택
+- [ ] Wander 범위 제한 (옵션)
+  - `wander_radius: float` 변수
+  - 시작 위치 기준 반경 내에서만 배회
+- [ ] 테스트
+  - 여러 NPC가 랜덤하게 배회
+  - 맵 밖으로 나가지 않는지 확인
+
+---
+
+#### Step 7.5: GoTo (목적지 이동) 패턴 구현
+**목표**: 특정 건물/위치로 이동하는 패턴
+**완료 기준**: NPC가 지정된 건물로 이동 후 대기
+
+- [ ] 목적지 설정 기능
+  - `destination: Vector2` 변수
+  - `set_destination(target: Vector2)` 함수
+- [ ] Idle (대기) 상태 구현
+  - `idle_timer: float` 변수
+  - 목적지 도착 시 IDLE 상태로 전환
+  - 일정 시간 후 다음 행동
+- [ ] 테스트
+  - NPC가 건물로 이동
+  - 도착 후 5초 대기
+  - 다음 목적지로 이동
+
+---
+
+#### Step 7.6: 건물 목적지 연동
+**목표**: 건물을 NPC의 목적지로 설정
+**완료 기준**: 주민이 집 → 상점 → 작업장 순환
+
+- [ ] BuildingEntity에 목적지 기능 추가
+  - `get_entrance_position()` 함수 (입구 좌표)
+  - 건물 타입별 분류 (집, 상점, 작업장 등)
+- [ ] NPC 스케줄 시스템 (기본)
+  - `schedule: Array[Vector2i]` (건물 그리드 좌표 배열)
+  - 순서대로 건물 방문
+- [ ] 테스트
+  - 주민 NPC: 집 → 상점 → 작업장 → 집
+  - 각 건물에서 대기 후 이동
+
+---
+
+#### Step 7.7: NPCManager 구현
+**목표**: 여러 NPC를 중앙에서 관리
+**완료 기준**: NPCManager로 NPC 생성/제거/조회
+
+- [ ] `scripts/managers/npc_manager.gd` 생성
+  - `npcs: Array[NPCEntity]` 배열
+  - `create_npc(spawn_pos: Vector2, pattern: NPCStateMachine.State)` 함수
+  - `remove_npc(npc: NPCEntity)` 함수
+  - `get_all_npcs()` 함수
+- [ ] test_map.gd에 통합
+  - NPCManager 인스턴스 생성
+  - 테스트 NPC 자동 생성
+- [ ] 테스트
+  - 여러 NPC 동시 생성
+  - 각각 다른 행동 패턴 적용
+
+---
+
+#### Step 7.8: 스케줄링 시스템 (옵션)
+**목표**: 시간대별 행동 패턴
+**완료 기준**: 낮에는 일하고 밤에는 집에 있음
+
+- [ ] TimeManager 구현 (옵션)
+  - 게임 시간 시스템 (낮/밤)
+  - Signal로 시간 변경 알림
+- [ ] NPC 스케줄 확장
+  - 시간대별 목적지 설정
+  - 예: 06:00-18:00 작업장, 18:00-06:00 집
+- [ ] 테스트
+  - 낮 → 밤 전환 시 NPC 행동 변경 확인
+
+---
+
 ## 🏃 In Progress (현재 진행 중)
 
 ### ✅ Step 0: RTS 카메라 시스템 (완료)
