@@ -73,7 +73,7 @@ func _ready() -> void:
 	building_manager.initialize(buildings_container)
 
 	# 3x3 그리드에 9개 건물 자동 생성
-	_create_test_buildings()
+	#_create_test_buildings()
 
 	print("[TestMap] 테스트 맵 초기화 완료")
 	print("[TestMap] 건물을 클릭하면 외곽선이 표시됩니다")
