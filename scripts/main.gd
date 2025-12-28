@@ -100,7 +100,7 @@ func cycle_all_buildings_state() -> void:
 
 
 ## 빈 공간 클릭 시 호출되는 함수
-func _on_empty_click(screen_pos: Vector2) -> void:
+func _on_empty_click(_screen_pos: Vector2) -> void:
 	# 화면 좌표 → 월드 좌표 변환
 	var world_pos: Vector2 = get_global_mouse_position()
 

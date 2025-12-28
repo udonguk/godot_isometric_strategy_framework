@@ -1,0 +1,27 @@
+[gd_scene load_steps=5 format=3 uid="uid://dlb2d87du4wg2"]
+
+[ext_resource type="Script" uid="uid://cte1g55t7rgw8" path="res://scripts/entity/unit_entity.gd" id="1_678su"]
+[ext_resource type="Texture2D" uid="uid://dnjp2dqgpl8al" path="res://assets/sprites/entity/unit_circle.svg" id="2_b1bt8"]
+[ext_resource type="Texture2D" uid="uid://ddri5ntoc0fad" path="res://assets/sprites/entity/selection_indicator.svg" id="3_igj5l"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_72rrd"]
+radius = 14.0
+
+[node name="UnitEntity" type="CharacterBody2D"]
+script = ExtResource("1_678su")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_b1bt8")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_72rrd")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
+path_desired_distance = 4.0
+target_desired_distance = 4.0
+avoidance_enabled = true
+radius = 16.0
+
+[node name="SelectionIndicator" type="Sprite2D" parent="."]
+visible = false
+texture = ExtResource("3_igj5l")
