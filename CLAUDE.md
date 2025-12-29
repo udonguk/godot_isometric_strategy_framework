@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-**Godot 4.5** 게임 프로젝트 "vampire_spread_isometric" - Godot 엔진으로 제작되는 아이소메트릭 게임입니다. GDScript를 스크립팅 언어로 사용하며 Forward Plus 렌더링 방식을 사용합니다.
+**Godot 4.5** 게임 프로젝트 "isometric_strategy_framework" - Godot 엔진으로 제작되는 아이소메트릭 전략 게임 프레임워크입니다. GDScript를 스크립팅 언어로 사용하며 Forward Plus 렌더링 방식을 사용합니다.
 
 ## 개발 환경
 
@@ -29,7 +29,7 @@ Godot 프로젝트는 전통적인 빌드/테스트 명령어가 없으며, Godo
 ## 프로젝트 구조
 
 ```
-vampire-spread-isometric/
+isometric-strategy-framework/
 ├── docs/            # 기획 및 디자인 문서 (애자일 구조)
 │   ├── design/      # [Design Docs] 시스템 설계 문서
 │   │   └── tile_system_design.md  # 타일 시스템 설계 (UI/Logic 분리 원칙 포함)

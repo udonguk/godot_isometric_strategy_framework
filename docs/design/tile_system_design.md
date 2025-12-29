@@ -78,7 +78,7 @@ Scene 구조:
 ## 5. 폴더 구조
 
 ```
-vampire-spread-isometric/
+isometric-strategy-framework/
 ├── scenes/
 │   ├── tiles/                    # 타일 시스템 (소스코드)
 │   │   ├── ground_tileset.tres          # 바닥 TileSet 리소스
