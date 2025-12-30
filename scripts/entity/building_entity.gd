@@ -1,3 +1,4 @@
+class_name BuildingEntity
 extends Node2D
 
 ## 건물 기본 클래스
@@ -54,17 +55,31 @@ func _ready() -> void:
 	# 초기 비주얼 업데이트
 	update_visual()
 
-	# 클릭 이벤트 연결
-	if area:
-		area.input_event.connect(_on_area_input_event)
-
 	# 외곽선 Material 초기화
 	_init_outline_material()
+	
+	# NavigationObstacle2D 설정 업데이트
+	_update_navigation_obstacle()
 
 
 # ============================================================
 # 상태 관리
 # ============================================================
+
+## NavigationObstacle2D 형상 업데이트
+func _update_navigation_obstacle() -> void:
+	var nav_obstacle = $NavigationObstacle2D
+	var collision_poly = $StaticBody2D/CollisionPolygon2D
+	
+	if nav_obstacle and collision_poly:
+		# CollisionPolygon2D의 점들을 가져옴 (Local 좌표)
+		var poly_points = collision_poly.polygon
+		
+		# NavigationObstacle2D에 vertices 설정
+		# 주의: 건물의 모양대로 정확히 깎아내기 위해 사용
+		nav_obstacle.vertices = poly_points
+		print("[Building] Navigation Obstacle vertices 설정 완료: ", poly_points.size(), "개 점")
+
 
 ## 건물 상태 변경
 func set_state(new_state: BuildingState) -> void:
@@ -85,26 +100,6 @@ func update_visual() -> void:
 			sprite.modulate = GameConfig.COLOR_INFECTING
 		BuildingState.INFECTED:
 			sprite.modulate = GameConfig.COLOR_INFECTED
-
-
-# ============================================================
-# 입력 처리
-# ============================================================
-
-## Area2D 입력 이벤트 처리 (클릭 감지)
-func _on_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
-	# 마우스 왼쪽 버튼 클릭 감지
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			_on_clicked()
-
-
-## 건물 클릭 시 호출되는 함수
-func _on_clicked() -> void:
-	print("[Building] 클릭됨 - Entity명: ", name, ", Grid: ", grid_position)
-
-	# 메인 씬에 선택 이벤트 전달
-	get_tree().call_group("main", "_on_building_selected", self)
 
 
 # ============================================================

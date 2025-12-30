@@ -5,3 +5,4 @@
 [node name="GroundTileMapLayer" type="TileMapLayer"]
 y_sort_enabled = true
 tile_set = ExtResource("1_bf1m4")
+navigation_enabled = false

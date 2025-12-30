@@ -19,6 +19,8 @@ config/icon="res://icon.svg"
 
 GameConfig="*res://scripts/config/game_config.gd"
 GridSystem="*res://scripts/map/grid_system.gd"
+SelectionManager="*res://scripts/managers/selection_manager.gd"
+InputManager="*res://scripts/managers/input_manager.gd"
 
 [display]
 
@@ -30,7 +32,11 @@ window/stretch/mode="viewport"
 
 [layer_names]
 
+2d_physics/layer_1="ground"
 2d_navigation/layer_1="walkable"
+2d_physics/layer_2="units"
+2d_physics/layer_3="buildings"
+2d_physics/layer_4="ui"
 
 [rendering]
 

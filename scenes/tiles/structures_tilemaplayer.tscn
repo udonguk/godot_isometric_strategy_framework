@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://bqvuej70ij3wt"]
+[gd_scene load_steps=4 format=4 uid="uid://bqvuej70ij3wt"]
 
 [ext_resource type="PackedScene" uid="uid://va2oopgrwgd4" path="res://scenes/entitys/building_entity.tscn" id="1_pw5ia"]
 
@@ -13,4 +13,5 @@ sources/0 = SubResource("TileSetScenesCollectionSource_eefvb")
 
 [node name="StructuresTileMapLayer" type="TileMapLayer"]
 y_sort_enabled = true
+tile_map_data = PackedByteArray("AAAAAAEAAAAAAAAAAQAAAAIAAAAAAAAAAQAAAAMAAAAAAAAAAQAAAAQAAAAAAAAAAQABAAQAAAAAAAAAAQACAAQAAAAAAAAAAQACAAUAAAAAAAAAAQAGAAAAAAAAAAAAAQAGAAEAAAAAAAAAAQAGAAIAAAAAAAAAAQAGAAMAAAAAAAAAAQAGAAQAAAAAAAAAAQAGAAUAAAAAAAAAAQAGAAYAAAAAAAAAAQAFAAYAAAAAAAAAAQAFAAcAAAAAAAAAAQAFAAgAAAAAAAAAAQAFAAkAAAAAAAAAAQAGAAkAAAAAAAAAAQA=")
 tile_set = SubResource("TileSet_a7s4e")

@@ -8,12 +8,19 @@
 radius = 14.0
 
 [node name="UnitEntity" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 5
+input_pickable = true
 script = ExtResource("1_678su")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.8, 0.8)
 texture = ExtResource("2_b1bt8")
+offset = Vector2(0, -16)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -13.000001)
+scale = Vector2(0.8, 0.8)
 shape = SubResource("CircleShape2D_72rrd")
 
 [node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
@@ -21,7 +28,10 @@ path_desired_distance = 4.0
 target_desired_distance = 4.0
 avoidance_enabled = true
 radius = 16.0
+debug_enabled = true
+
 
 [node name="SelectionIndicator" type="Sprite2D" parent="."]
-visible = false
+position = Vector2(0, -13)
+scale = Vector2(0.8, 0.8)
 texture = ExtResource("3_igj5l")

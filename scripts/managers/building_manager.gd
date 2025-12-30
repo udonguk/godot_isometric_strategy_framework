@@ -23,7 +23,7 @@ const BuildingEntityScene = preload("res://scenes/entitys/building_entity.tscn")
 ## Key: Vector2i (그리드 좌표), Value: BuildingEntity 노드
 var grid_buildings: Dictionary = {}
 
-## 건물들을 추가할 부모 노드 (씬 트리에서 설정)
+## 엔티티들을 추가할 부모 노드 (Entities 컨테이너 - z_index = 1)
 var buildings_parent: Node2D = null
 
 
@@ -32,7 +32,7 @@ var buildings_parent: Node2D = null
 # ============================================================
 
 ## 매니저 초기화
-## parent_node: 건물들을 추가할 부모 노드 (예: test_map의 Buildings 노드)
+## parent_node: 엔티티를 추가할 부모 노드 (예: test_map의 Entities 노드)
 func initialize(parent_node: Node2D) -> void:
 	buildings_parent = parent_node
 	print("[BuildingManager] 초기화 완료 - 부모 노드: ", parent_node.name)

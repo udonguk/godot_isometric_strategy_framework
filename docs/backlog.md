@@ -95,7 +95,8 @@
   - 예: 1x1 건물 = 다이아몬드 4개 꼭지점
 - [ ] BuildingManager.create_building() 수정
   - 건물 생성 후 `await get_tree().physics_frame` 대기
-  - NavigationServer2D.map_force_update() 호출
+  - NavigationRegion2D.bake_navigation_polygon() 호출 (자동 베이크)
+  - 건물 장애물 자동 반영
 - [ ] 테스트
   - 건물 배치 후 유닛 이동 → 건물 피해서 이동 확인
   - 건물 반대편으로 이동 → 우회 경로 생성 확인
@@ -110,11 +111,13 @@
   - `grid_buildings` Dictionary에서 제거
   - 건물 씬 queue_free()
   - GridSystem.obstacles에서 제거
+  - NavigationRegion2D 자동 베이크 호출
 - [ ] BuildingEntity에 삭제 UI 추가 (옵션)
   - Delete 키 또는 UI 버튼
-- [ ] NavigationServer2D 업데이트
-  - NavigationObstacle2D가 자동으로 제거됨
-  - map_force_update() 호출
+- [ ] NavigationRegion2D 자동 베이크
+  - 건물 제거 후 `await get_tree().physics_frame` 대기
+  - NavigationRegion2D.bake_navigation_polygon() 호출
+  - 건물이 있던 위치로 Navigation 복구
 - [ ] 테스트
   - 건물 삭제 → Navigation 복구 확인
   - 해당 위치로 유닛 이동 가능 확인

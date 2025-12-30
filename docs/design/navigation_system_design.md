@@ -130,50 +130,165 @@ func move_units(target):
 ### Step 3: 장애물 (건물) 처리
 **목표**: 유닛이 건물을 통과하지 못하게 방지.
 
-#### 방식 A: NavigationObstacle2D (동적 장애물) ✅ 권장
+**구현 방식**: NavigationRegion2D가 Static Colliders를 감지하여 장애물을 자동으로 제외한 Navigation Mesh를 생성합니다.
 
-1.  **BuildingEntity 씬 수정**:
-	*   `scenes/entity/building_entity.tscn`에 `NavigationObstacle2D` 노드 추가
-	*   건물의 바닥 면적(footprint)에 맞춰 버텍스 설정:
-		```
-		예: 1x1 타일 건물 (64x32 아이소메트릭)
-		vertices = [
-			Vector2(-32, 0),  # 좌
-			Vector2(0, -16),  # 상
-			Vector2(32, 0),   # 우
-			Vector2(0, 16)    # 하
-		]
-		```
+#### 1. 씬 구조
 
-2.  **BuildingManager 통합** (`scripts/managers/building_manager.gd`):
-	```gdscript
-	func create_building(grid_pos: Vector2i) -> void:
-		# 1. 건물 생성 (기존 로직)
-		var building = building_scene.instantiate()
-		var world_pos = GridSystem.grid_to_world(grid_pos)
-		building.global_position = world_pos
-		add_child(building)
+```
+World (Node2D)
+└─ NavigationRegion2D
+   ├─ GroundTileMapLayer (navigation_enabled = false ⚠️ 중요!)
+   ├─ StructuresTileMapLayer
+   └─ Entities (Node2D)
+      ├─ BuildingEntity (StaticBody2D, collision_layer = 4)
+      ├─ BuildingEntity (StaticBody2D, collision_layer = 4)
+      └─ UnitEntity (CharacterBody2D)
+```
 
-		# 2. GridSystem에 장애물 등록
-		GridSystem.mark_as_obstacle(grid_pos, building.size)
+**핵심 포인트**:
+- ✅ GroundTileMapLayer는 NavigationRegion2D의 **자식 노드**
+- ✅ TileSet에 Navigation Polygon은 **반드시 그려야 함** (이동 가능 영역 정의)
+- ⚠️ **하지만 `navigation_enabled = false`로 설정!** (NavigationRegion2D와 충돌 방지)
 
-		# 3. NavigationServer 강제 업데이트 (즉시 반영)
-		await get_tree().physics_frame  # 1프레임 대기
-		NavigationServer2D.map_force_update(get_world_2d().navigation_map)
-	```
+#### 2. TileMapLayer 설정
 
-3.  **장점**:
-	*   ✅ 건물 철거 시 자동으로 장애물 제거 (씬 제거 시)
-	*   ✅ 복잡한 건물 형태도 정확하게 표현 가능
-	*   ✅ Godot 내장 기능 활용 (CLAUDE.md 원칙 준수)
+**GroundTileMapLayer (씬 또는 에디터)**:
+```gdscript
+# ground_tilemaplayer.tscn 또는 Inspector에서 설정
+navigation_enabled = false  # ⚠️ 필수! NavigationRegion2D와 충돌 방지
+```
 
-#### 방식 B: TileMap 타일 제거 (정적 구멍)
+**TileSet 설정** (`ground_tileset.tres`):
+- Navigation Layer 0에 각 타일의 다이아몬드 형태 Polygon 그리기
+- 이 Polygon들이 NavigationRegion2D의 **기본 이동 가능 영역** 정의
 
-*   건물 배치 시 해당 위치의 Ground 타일 제거
-*   **단점**: 건물 철거 시 타일 복구 로직 필요
-*   **사용 시기**: 완전히 정적인 맵 (건물 철거 없음)
+#### 3. NavigationRegion2D 설정
 
-**결정**: **방식 A (NavigationObstacle2D) 사용** - 동적 게임플레이에 적합
+**NavigationPolygon 리소스 설정** (Inspector 또는 에디터에서 Bake):
+
+```
+[NavigationPolygon 속성]
+parsed_geometry_type = STATIC_COLLIDERS  # StaticBody2D만 감지
+parsed_collision_mask = 4                # Layer 3 감지 (2^3 = 4)
+source_geometry_mode = GROUPS_WITH_FALLBACK  # 그룹 기반 감지
+source_geometry_group_name = navigation_obstacle  # (선택사항)
+agent_radius = 8.0  # 유닛 반경에 맞춰 조정
+```
+
+**중요한 설정 해설**:
+
+| 설정 | 값 | 설명 |
+|------|-----|------|
+| `parsed_geometry_type` | `STATIC_COLLIDERS` | StaticBody2D의 충돌 형태만 장애물로 인식 |
+| `parsed_collision_mask` | `4` (Layer 3) | **건물이 있는 Physics Layer를 정확히 지정!**<br>Layer 3 = 2^3 = 4<br>Layer 5 = 2^5 = 32 |
+| `source_geometry_mode` | `GROUPS_WITH_FALLBACK` | 그룹 이름으로 필터링 (옵션) |
+| `agent_radius` | `8.0` | 장애물 주변 여백 (유닛이 벽에 딱 붙지 않음) |
+
+**⚠️ 주의사항**:
+- `parsed_collision_mask`는 **비트 마스크** 값입니다!
+  - Layer 1 = 1 (2^0)
+  - Layer 2 = 2 (2^1)
+  - Layer 3 = 4 (2^2)
+  - Layer 4 = 8 (2^3)
+  - 여러 레이어 감지: 4 | 8 = 12 (Layer 3 + Layer 4)
+
+#### 4. BuildingEntity 설정
+
+**씬 구조** (`building_entity.tscn`):
+```
+BuildingEntity (Node2D)
+├─ Area2D (클릭 감지용)
+│  └─ CollisionPolygon2D (collision_layer = 4)
+├─ StaticBody2D (Navigation 장애물용) ⭐
+│  └─ CollisionPolygon2D (collision_layer = 4)  # Layer 3
+└─ Sprite2D (비주얼)
+```
+
+**StaticBody2D 설정**:
+- `collision_layer = 4` (Layer 3) - NavigationRegion2D가 감지할 레이어
+- `collision_mask = 0` (아무것도 감지하지 않음)
+- CollisionPolygon2D는 건물의 바닥 면적(footprint)에 맞춰 설정
+
+**스크립트** (`building_entity.gd`):
+```gdscript
+func _ready() -> void:
+	# navigation_obstacle 그룹 등록 (선택사항)
+	add_to_group("navigation_obstacle")
+```
+
+#### 5. 동적 건물 추가/삭제 시 자동 베이킹
+
+**BuildingManager 수정** (`building_manager.gd`):
+
+```gdscript
+# NavigationRegion2D 참조 (test_map.gd에서 전달)
+var nav_region: NavigationRegion2D = null
+
+func initialize(parent_node: Node2D, navigation_region: NavigationRegion2D) -> void:
+	buildings_parent = parent_node
+	nav_region = navigation_region
+
+func create_building(grid_pos: Vector2i) -> Node2D:
+	# ... 건물 생성 로직 ...
+
+	# 건물 추가 후 Navigation 자동 베이킹
+	if nav_region:
+		await get_tree().physics_frame  # StaticBody2D 준비 대기
+		nav_region.bake_navigation_polygon()
+		print("[BuildingManager] Navigation 자동 베이킹 완료")
+
+	return building
+
+func remove_building(grid_pos: Vector2i) -> void:
+	# ... 건물 제거 로직 ...
+
+	# 건물 제거 후 Navigation 자동 베이킹
+	if nav_region:
+		await get_tree().physics_frame
+		nav_region.bake_navigation_polygon()
+		print("[BuildingManager] Navigation 자동 베이킹 완료")
+```
+
+#### 6. 장점 및 단점
+
+**✅ 장점**:
+- **간단한 동적 관리**: 건물 추가/삭제 시 `bake_navigation_polygon()` 한 줄로 끝
+- **건물 크기 무관**: 1x1, 2x2, 3x3 등 어떤 크기든 자동 처리
+- **에디터 미리보기**: Godot 에디터에서 Bake 버튼으로 결과 확인 가능
+- **Godot 내장 기능 100% 활용**: 추가 로직 최소화
+
+**⚠️ 주의사항**:
+- **TileMapLayer Navigation 충돌**: `navigation_enabled = false` 필수!
+- **Physics Layer 정확히 지정**: `parsed_collision_mask` 잘못 설정 시 장애물 감지 안 됨
+- **베이킹 비용**: 건물이 매우 많아지면 베이킹 시간 증가 (일반적으로는 문제 없음)
+
+**❌ 단점**:
+- 실시간 베이킹이므로 건물이 100개 이상일 때 성능 저하 가능
+  - **해결책**: 배치 모드로 여러 건물을 한 번에 배치 후 마지막에 한 번만 베이킹
+
+#### 7. 트러블슈팅
+
+**문제 1**: 에디터에서 베이킹은 성공하는데 게임 실행 시 깨짐
+- **원인**: TileMapLayer의 `navigation_enabled = true` 상태
+- **해결**: `ground_layer.navigation_enabled = false` 설정
+
+**문제 2**: 건물이 감지되지 않음 (Polygon 0개)
+- **원인**: `parsed_collision_mask`가 건물의 Physics Layer와 불일치
+- **해결**:
+  - BuildingEntity의 `collision_layer` 확인 (예: Layer 3)
+  - NavigationRegion2D의 `parsed_collision_mask = 4` (2^3) 설정
+
+**문제 3**: 유닛이 건물을 통과함
+- **원인 1**: NavigationRegion2D가 베이킹되지 않음
+  - **해결**: 게임 실행 후 또는 건물 배치 후 `bake_navigation_polygon()` 호출
+- **원인 2**: 베이킹은 되었지만 유닛이 Navigation을 따르지 않음
+  - **해결**: UnitEntity의 NavigationAgent2D 설정 확인
+
+**문제 4**: 건물을 배치했는데 Navigation이 업데이트 안 됨
+- **원인**: 자동 베이킹 로직이 없음
+- **해결**: BuildingManager에 위의 5번 코드 추가
+
+---
 
 ### Step 4: 유닛 엔티티 생성
 **목표**: 기본 이동이 가능한 유닛 생성.

@@ -49,9 +49,6 @@ var is_selected: bool = false:
 # ============================================================
 
 func _ready() -> void:
-	# 클릭 감지 활성화 (CharacterBody2D는 기본적으로 비활성화됨)
-	input_pickable = true
-
 	# NavigationAgent2D 설정
 	nav_agent.path_desired_distance = 4.0
 	nav_agent.target_desired_distance = 4.0
@@ -89,17 +86,22 @@ func _physics_process(delta: float) -> void:
 ## 목표 위치로 이동 명령
 ## @param target_pos: 월드 좌표 기준 목표 위치
 func move_to(target_pos: Vector2) -> void:
-	# 목표가 너무 가까우면 무시 (이미 도착)
+	# 1. 목표가 너무 가까우면 무시 (이미 도착)
 	if global_position.distance_to(target_pos) < 8.0:
 		return
-
-	nav_agent.target_position = target_pos
-	print("[UnitEntity] 이동 명령 - Target: ", target_pos)
+		
+	# 2. 목표 지점을 가장 가까운 Navigation Mesh 위 좌표로 보정
+	# 클릭한 곳이 장애물 내부거나 맵 밖일 경우, 갈 수 있는 가장 가까운 곳으로 안내하기 위함
+	var map_rid = get_world_2d().navigation_map
+	var optimized_target_pos = NavigationServer2D.map_get_closest_point(map_rid, target_pos)
+	
+	nav_agent.target_position = optimized_target_pos
+	print("[UnitEntity] 이동 명령 - Raw Target: %s -> Optimized Target: %s" % [target_pos, optimized_target_pos])
 
 	# 경로 계산 후 도달 가능 여부 체크
 	await get_tree().physics_frame
 	if not nav_agent.is_target_reachable():
-		push_warning("[UnitEntity] 목표 도달 불가능: ", target_pos)
+		push_warning("[UnitEntity] 목표 도달 불가능: ", optimized_target_pos)
 		# TODO: 유저 피드백 (소리, 시각 효과)
 
 

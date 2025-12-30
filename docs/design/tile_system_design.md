@@ -61,19 +61,64 @@ func grid_to_world(grid_pos: Vector2i) -> Vector2:
 
 ## 4. 아키텍처
 
-### 4.1. 레이어 구조
+### 4.1. 레이어 구조 (z_index 기반)
+
+**최종 씬 구조:**
 ```
-Scene 구조:
-├── TileMapLayer (바닥)      # 정적 배경, 시각적 용도
-└── BuildingLayer (Node2D)   # 상태를 가진 건물들
-    ├── Building (인스턴스 1)
-    ├── Building (인스턴스 2)
-    └── ...
+test_map (Node2D)
+└── World (Node2D, y_sort_enabled = true)
+    ├── GroundTileMapLayer (y_sort_enabled = true, z_index = 0)    🟦 배경 레이어
+    ├── StructuresTileMapLayer (y_sort_enabled = true, z_index = 0) 🟦 배경 레이어
+    └── Entities (Node2D, y_sort_enabled = true, z_index = 1)       🟩 엔티티 레이어
+        ├── Building1, Building2...  ← BuildingManager가 동적 생성
+        └── Unit1, Unit2...          ← UnitManager가 동적 생성
 ```
 
-### 4.2. 분리 이유
+**레이어 분리 기준:**
+- **z_index = 0**: 바닥 및 구조물 (정적 배경)
+- **z_index = 1**: 동적 엔티티 (건물, 유닛)
+- **z_index = 2**: 공중 오브젝트 (구름, 새 - 미래 확장)
+
+### 4.2. 렌더링 순서 보장
+
+**Godot의 렌더링 우선순위:**
+1. **z_index** (우선순위 최상)
+2. **Y-Sort** (같은 z_index 내에서)
+3. **노드 트리 순서** (Y좌표도 같을 때)
+
+**결과:**
+- 모든 배경 타일 (z_index = 0) 먼저 렌더링
+- 모든 엔티티 (z_index = 1) 나중에 렌더링
+- 각 레이어 내에서는 Y좌표로 정렬 (Y-Sort)
+
+### 4.3. 레이어별 Y-Sort 설정
+
+**World (루트 컨테이너):**
+```gdscript
+y_sort_enabled = true  # 직계 자식들을 Y좌표로 정렬
+```
+
+**GroundTileMapLayer (배경):**
+```gdscript
+y_sort_enabled = true   # 타일들끼리 Y좌표로 정렬
+z_index = 0             # 배경 레이어
+```
+- 아이소메트릭 타일들이 올바른 전후관계로 렌더링됨
+- Y좌표가 큰 타일이 앞에 그려짐
+
+**Entities (엔티티 컨테이너):**
+```gdscript
+y_sort_enabled = true   # 엔티티들끼리 Y좌표로 정렬
+z_index = 1             # 전경 레이어 (항상 배경 위)
+```
+- 건물, 유닛 등이 Y좌표에 따라 정렬
+- 항상 모든 배경 타일 위에 렌더링됨
+
+### 4.4. 분리 이유
 - **TileMapLayer**: 바닥 타일 렌더링 최적화, 상태 불필요
 - **Building 씬**: 개별 상태 관리 (감염 진행도, 상태 변화)
+- **z_index 분리**: 엔티티가 항상 배경 위에 렌더링되도록 보장
+- **Entities 컨테이너**: 구조적으로 정리, 관리 용이
 
 ## 5. 폴더 구조
 
@@ -804,3 +849,216 @@ scenes/maps/
 - TileMapLayer의 타일셋은 Godot 에디터에서 설정
 - 아이소메트릭 좌표 변환 공식은 `GridSystem`에 구현
 - 성능 최적화: 감염 중인 건물만 `_process` 활성화
+
+## 12. 레이어 시스템 구현 가이드
+
+### 12.1. 새로운 엔티티 추가 방법
+
+**예시: 유닛 추가**
+
+```gdscript
+# scripts/managers/unit_manager.gd
+class_name UnitManager
+
+var entities_container: Node2D  # Entities 컨테이너 참조
+
+func initialize(entities: Node2D):
+    entities_container = entities
+
+func create_unit(grid_pos: Vector2i) -> Unit:
+    var unit = UnitScene.instantiate()
+
+    # 그리드 좌표 설정
+    unit.grid_position = grid_pos
+
+    # 월드 좌표 변환
+    unit.global_position = GridSystem.grid_to_world(grid_pos)
+
+    # Entities 컨테이너에 추가 (자동으로 z_index = 1, Y-Sort 적용)
+    entities_container.add_child(unit)
+
+    return unit
+```
+
+**핵심:**
+- ✅ Entities 컨테이너에 추가하면 자동으로 올바른 레이어에 배치
+- ✅ Y-Sort 자동 적용
+- ✅ 항상 배경 타일 위에 렌더링
+
+### 12.2. 공중 레이어 추가 (미래 확장)
+
+**Step 1: test_map.tscn에 Sky 컨테이너 추가**
+
+```
+World (y_sort_enabled = true)
+├── GroundTileMapLayer (z_index = 0)
+├── StructuresTileMapLayer (z_index = 0)
+├── Entities (z_index = 1)
+└── Sky (Node2D, y_sort_enabled = true, z_index = 2)  ← 추가
+    └── Cloud1, Bird1...
+```
+
+**Step 2: Godot 에디터에서 설정**
+
+```
+1. World 노드 우클릭 → Add Child Node → Node2D
+2. 이름: Sky
+3. Inspector:
+   - CanvasItem → Ordering → Z Index: 2
+   - CanvasItem → Ordering → Y Sort Enabled: true
+4. 저장
+```
+
+**Step 3: 사용 예시**
+
+```gdscript
+# scripts/managers/sky_manager.gd
+class_name SkyManager
+
+var sky_container: Node2D
+
+func initialize(sky: Node2D):
+    sky_container = sky
+
+func create_cloud(grid_pos: Vector2i) -> Cloud:
+    var cloud = CloudScene.instantiate()
+    cloud.global_position = GridSystem.grid_to_world(grid_pos)
+
+    # Sky 컨테이너에 추가 (z_index = 2, 모든 것 위에)
+    sky_container.add_child(cloud)
+
+    return cloud
+```
+
+### 12.3. 레이어별 렌더링 순서 정리
+
+| z_index | 레이어 | 내용 | Y-Sort |
+|---------|--------|------|--------|
+| 0 | 배경 | GroundTileMapLayer, StructuresTileMapLayer | ✅ 타일들끼리 |
+| 1 | 엔티티 | Buildings, Units | ✅ 엔티티들끼리 |
+| 2 | 공중 | Clouds, Birds (미래) | ✅ 공중 오브젝트끼리 |
+
+**렌더링 흐름:**
+1. 모든 배경 타일 렌더링 (z_index = 0, Y-Sort 적용)
+2. 모든 엔티티 렌더링 (z_index = 1, Y-Sort 적용)
+3. 모든 공중 오브젝트 렌더링 (z_index = 2, Y-Sort 적용)
+
+### 12.4. 매니저 초기화 패턴
+
+**test_map.gd 예시:**
+
+```gdscript
+# scripts/maps/test_map.gd
+extends Node2D
+
+@onready var world_container: Node2D = $World
+@onready var entities_container: Node2D = $World/Entities
+@onready var sky_container: Node2D = $World/Sky  # 미래
+
+var building_manager: BuildingManager
+var unit_manager: UnitManager
+var sky_manager: SkyManager  # 미래
+
+func _ready():
+    # BuildingManager 초기화
+    building_manager = BuildingManager.new()
+    add_child(building_manager)
+    building_manager.initialize(entities_container)  # Entities에 추가
+
+    # UnitManager 초기화
+    unit_manager = UnitManager.new()
+    add_child(unit_manager)
+    unit_manager.initialize(entities_container)  # 같은 컨테이너
+
+    # SkyManager 초기화 (미래)
+    # sky_manager = SkyManager.new()
+    # add_child(sky_manager)
+    # sky_manager.initialize(sky_container)  # Sky에 추가
+```
+
+**핵심 패턴:**
+- 모든 동적 엔티티는 `entities_container`에 추가
+- 각 매니저는 컨테이너 참조만 받음
+- z_index와 Y-Sort는 컨테이너가 자동 처리
+
+### 12.5. 디버깅 팁
+
+**렌더링 순서 확인:**
+
+```gdscript
+# 디버그용 스크립트 (test_map.gd에 추가)
+func _input(event):
+    if event.is_action_pressed("ui_accept"):  # Space 키
+        print("=== 렌더링 순서 디버그 ===")
+        print_tree_pretty()
+
+func print_tree_pretty():
+    for child in world_container.get_children():
+        print("- %s (z_index: %d, y_sort: %s)" % [
+            child.name,
+            child.z_index,
+            child.y_sort_enabled
+        ])
+        if child.get_child_count() > 0:
+            for grandchild in child.get_children():
+                print("  - %s (pos.y: %.1f)" % [
+                    grandchild.name,
+                    grandchild.global_position.y
+                ])
+```
+
+**Godot Remote 탭에서 확인:**
+- Scene 트리에서 노드 순서 확인
+- z_index, y_sort_enabled 속성 확인
+- 유닛이 Entities 컨테이너 아래에 있는지 확인
+
+### 12.6. 주의사항
+
+**❌ 하지 말아야 할 것:**
+```gdscript
+# 잘못된 예: World에 직접 추가
+world_container.add_child(unit)  # ❌ z_index가 명확하지 않음
+
+# 잘못된 예: 별도 컨테이너 추가 후 z_index 누락
+var units = Node2D.new()
+world_container.add_child(units)
+# z_index 설정 안 함! ❌
+units.add_child(unit)
+```
+
+**✅ 올바른 방법:**
+```gdscript
+# 올바른 예: Entities 컨테이너 사용
+entities_container.add_child(unit)  # ✅ z_index = 1 자동 적용
+
+# 올바른 예: 새 컨테이너 추가 시 z_index 명시
+var units = Node2D.new()
+units.y_sort_enabled = true
+units.z_index = 1  # ✅ 명시적 설정
+world_container.add_child(units)
+```
+
+## 13. 성능 고려사항
+
+### 13.1. Y-Sort 비용
+
+**Y-Sort는 매 프레임 정렬을 수행하므로 비용이 있음**
+
+**최적화 방법:**
+- ✅ 정적 오브젝트는 Y-Sort 비활성화 (배경 타일 제외)
+- ✅ 엔티티가 이동하지 않으면 Y좌표 변경 최소화
+- ✅ 대량의 엔티티는 필요한 것만 Y-Sort
+
+**예시:**
+```gdscript
+# 고정된 건물은 Y좌표가 변하지 않으므로 Y-Sort 비용 낮음
+# 이동하는 유닛만 매 프레임 재정렬됨
+```
+
+### 13.2. z_index 활용
+
+**z_index는 Y-Sort보다 빠름 (정수 비교만)**
+
+**권장 구조:**
+- 레이어는 z_index로 분리 (빠름)
+- 각 레이어 내부만 Y-Sort (필요한 곳만)
