@@ -27,16 +27,19 @@ var selected_building = null  # BuildingEntity 타입 (순환 참조 방지)
 
 ## 유닛 선택
 ## @param unit: 선택할 유닛
-## @param multi_select: true면 기존 선택 유지, false면 기존 선택 해제
+## @param multi_select: true면 기존 유닛 선택 유지, false면 기존 유닛 선택 해제
 func select_unit(unit: UnitEntity, multi_select: bool = false) -> void:
 	if not unit:
 		push_warning("[SelectionManager] null 유닛을 선택하려고 시도했습니다.")
 		return
 
-	# 다중 선택이 아니면 기존 선택 해제
+	# 다중 선택이 아니면 기존 유닛 선택 해제
 	if not multi_select:
 		deselect_all_units()
-		deselect_building()  # 건물 선택도 해제
+
+	# 건물 선택은 항상 해제 (다중 선택 여부와 무관)
+	# 이유: 건물과 유닛은 동시에 선택될 수 없음
+	deselect_building()
 
 	# 이미 선택된 유닛이면 무시
 	if unit in selected_units:
@@ -92,14 +95,14 @@ func select_building(building) -> void:  # BuildingEntity 타입
 
 	# 기존 건물 선택 해제
 	if selected_building and selected_building != building:
-		selected_building.hide_outline()
+		selected_building.is_selected = false
 
 	# 유닛 선택도 해제 (건물 선택 시)
 	deselect_all_units()
 
 	# 새 건물 선택
 	selected_building = building
-	selected_building.show_outline()
+	selected_building.is_selected = true
 
 	print("[SelectionManager] 건물 선택됨: ", building.name)
 
@@ -107,7 +110,7 @@ func select_building(building) -> void:  # BuildingEntity 타입
 ## 건물 선택 해제
 func deselect_building() -> void:
 	if selected_building:
-		selected_building.hide_outline()
+		selected_building.is_selected = false
 		print("[SelectionManager] 건물 선택 해제: ", selected_building.name)
 		selected_building = null
 

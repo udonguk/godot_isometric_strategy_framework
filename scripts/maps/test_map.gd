@@ -14,9 +14,6 @@ extends Node2D
 ## BuildingManager 스크립트 참조
 const BuildingManager = preload("res://scripts/managers/building_manager.gd")
 
-## BuildingEntity 스크립트 참조 (상태 enum 접근용)
-const BuildingEntity = preload("res://scripts/entity/building_entity.gd")
-
 ## UnitEntity 씬 참조 (테스트용)
 const UnitEntityScene = preload("res://scenes/entitys/unit_entity.tscn")
 
@@ -114,12 +111,6 @@ func _create_test_buildings() -> void:
 		for y in range(start_y, start_y + grid_size):
 			var grid_pos = Vector2i(x, y)
 			var building = building_manager.create_building(grid_pos)
-
-			# 중앙 건물(1,1)을 INFECTED 상태로 초기화
-			if grid_pos == Vector2i(1, 1):
-				if building and building.has_method("set_state"):
-					building.set_state(BuildingEntity.BuildingState.INFECTED)
-					print("[TestMap] 중앙 건물(1,1)을 INFECTED 상태로 설정")
 
 	# 생성 완료 로그
 	var total_count = building_manager.get_building_count()

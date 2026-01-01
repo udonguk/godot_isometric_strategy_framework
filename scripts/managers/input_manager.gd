@@ -39,22 +39,27 @@ func _unhandled_input(event: InputEvent) -> void:
 ## 좌클릭 처리 (선택)
 func _handle_left_click() -> void:
 	var mouse_pos = get_viewport().get_mouse_position()
+	print("[InputManager] 좌클릭 - 마우스 위치: ", mouse_pos)
 
 	# 우선순위 순서대로 검사: 유닛 > 건물 > 빈 공간
 
 	# 1순위: 유닛 검사
 	var unit_result = _query_entity_at(mouse_pos, ClickPriority.UNIT)
 	if unit_result:
+		print("[InputManager] 유닛 감지됨: ", unit_result.collider)
 		_on_unit_clicked(unit_result.collider)
 		return
 
 	# 2순위: 건물 검사
 	var building_result = _query_entity_at(mouse_pos, ClickPriority.BUILDING)
+	print("[InputManager] 건물 검사 결과: ", building_result)
 	if building_result:
+		print("[InputManager] 건물 감지됨: ", building_result.collider, " (타입: ", building_result.collider.get_class(), ")")
 		_on_building_clicked(building_result.collider)
 		return
 
 	# 3순위: 빈 공간 처리
+	print("[InputManager] 빈 공간 클릭")
 	_on_empty_space_clicked()
 
 
@@ -136,14 +141,17 @@ func _on_unit_clicked(unit: Node2D) -> void:
 
 
 ## 건물 클릭 핸들러
-func _on_building_clicked(building: Node2D) -> void:
+func _on_building_clicked(collider: Node2D) -> void:
+	# Area2D가 감지되므로 부모 노드(BuildingEntity)를 가져옴
+	var building = collider.get_parent()
+
 	if not building is BuildingEntity:
 		push_warning("[InputManager] 건물이 아닌 엔티티를 건물로 처리하려고 시도: ", building.name)
 		return
 
 	# SelectionManager에 위임
 	SelectionManager.select_building(building)
-	
+
 	print("[InputManager] 건물 클릭: ", building.name)
 
 

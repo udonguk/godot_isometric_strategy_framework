@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://va2oopgrwgd4"]
+[gd_scene load_steps=5 format=3 uid="uid://va2oopgrwgd4"]
 
 [ext_resource type="Script" uid="uid://c74u8btq2lslk" path="res://scripts/entity/building_entity.gd" id="1_lfyv4"]
 [ext_resource type="Texture2D" uid="uid://dpmno36hud44x" path="res://assets/sprites/tiles/isometric-sandbox-sheet.png" id="2_yqyp6"]
+[ext_resource type="Texture2D" uid="uid://c4mw5tv7nkanj" path="res://assets/sprites/entity/selection_arrow.svg" id="3_yqyp6"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_lu6ko"]
 atlas = ExtResource("2_yqyp6")
@@ -26,3 +27,10 @@ collision_mask = 0
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="StaticBody2D"]
 polygon = PackedVector2Array(16, 0, 0, 8, -16, 0, 0, -8)
+
+[node name="SelectionIndicator" type="Sprite2D" parent="."]
+visible = false
+position = Vector2(8.526513e-14, -33)
+rotation = 3.1415927
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("3_yqyp6")

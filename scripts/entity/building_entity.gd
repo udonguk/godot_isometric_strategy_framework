@@ -5,31 +5,17 @@ extends Node2D
 ## 감염 시스템의 핵심 엔티티
 
 # ============================================================
-# 건물 상태 정의
-# ============================================================
-
-enum BuildingState {
-	NORMAL,      ## 일반 상태 (감염되지 않음)
-	INFECTING,   ## 감염 진행 중
-	INFECTED     ## 완전 감염됨
-}
-
-
-# ============================================================
 # 상태 변수
 # ============================================================
-
-## 현재 건물 상태
-var current_state: BuildingState = BuildingState.NORMAL
 
 ## 그리드 좌표 (논리적 위치)
 var grid_position: Vector2i = Vector2i.ZERO
 
-## 외곽선 Material (선택 시 사용)
-var outline_material: ShaderMaterial = null
-
-## 선택 여부
-var is_selected: bool = false
+## 선택 상태 (SelectionManager가 사용)
+var is_selected: bool = false:
+	set(value):
+		is_selected = value
+		_update_selection_indicator()
 
 
 # ============================================================
@@ -43,6 +29,10 @@ var is_selected: bool = false
 ## 주의: 씬에 Area2D 노드가 있어야 함
 @onready var area: Area2D = $Area2D
 
+## SelectionIndicator 노드 참조 (선택 표시)
+## 주의: 씬에 SelectionIndicator 노드가 있어야 함
+@onready var selection_indicator: Sprite2D = $SelectionIndicator if has_node("SelectionIndicator") else null
+
 
 # ============================================================
 # 생명주기
@@ -52,22 +42,39 @@ func _ready() -> void:
 	# 그룹 등록 (main.gd에서 찾을 수 있도록)
 	add_to_group("buildings")
 
-	# 초기 비주얼 업데이트
-	update_visual()
+	# 디버그: 건물 생성 로그
+	print("[BuildingEntity] 건물 생성됨: ", name, " at ", global_position)
+	print("  - Area2D collision_layer: ", $Area2D.collision_layer if has_node("Area2D") else "없음")
 
-	# 외곽선 Material 초기화
-	_init_outline_material()
-	
+	# 초기 비주얼 설정 (기본 색상)
+	if sprite:
+		sprite.modulate = Color.WHITE
+
+	# 선택 인디케이터 초기 숨김
+	if selection_indicator:
+		selection_indicator.visible = false
+
+	# StaticBody2D는 Navigation 전용이므로 클릭 레이어에서 제외
+	# InputManager가 Area2D만 감지하도록 collision_layer 0으로 설정
+	if has_node("StaticBody2D"):
+		var static_body = $StaticBody2D as StaticBody2D
+		if static_body:
+			static_body.collision_layer = 0  # 클릭 감지 비활성화
+			static_body.collision_mask = 0   # 충돌 감지 비활성화
+
 	# NavigationObstacle2D 설정 업데이트
 	_update_navigation_obstacle()
 
 
 # ============================================================
-# 상태 관리
+# Navigation 설정
 # ============================================================
 
 ## NavigationObstacle2D 형상 업데이트
 func _update_navigation_obstacle() -> void:
+	if not has_node("NavigationObstacle2D"):
+		return
+
 	var nav_obstacle = $NavigationObstacle2D
 	var collision_poly = $StaticBody2D/CollisionPolygon2D
 	
@@ -81,76 +88,14 @@ func _update_navigation_obstacle() -> void:
 		print("[Building] Navigation Obstacle vertices 설정 완료: ", poly_points.size(), "개 점")
 
 
-## 건물 상태 변경
-func set_state(new_state: BuildingState) -> void:
-	current_state = new_state
-	update_visual()
-	print("[Building] 상태 변경: ", _state_to_string(new_state))
+# ============================================================
+# 선택 인디케이터
+# ============================================================
 
-
-## 비주얼 업데이트 (상태별 색상 적용)
-func update_visual() -> void:
-	if not sprite:
+## 선택 상태에 따라 인디케이터 표시/숨김
+func _update_selection_indicator() -> void:
+	"""선택 상태에 따라 인디케이터 표시/숨김 (UnitEntity와 동일)"""
+	if not selection_indicator:
 		return
 
-	match current_state:
-		BuildingState.NORMAL:
-			sprite.modulate = GameConfig.COLOR_NORMAL
-		BuildingState.INFECTING:
-			sprite.modulate = GameConfig.COLOR_INFECTING
-		BuildingState.INFECTED:
-			sprite.modulate = GameConfig.COLOR_INFECTED
-
-
-# ============================================================
-# 외곽선 관리
-# ============================================================
-
-## 외곽선 Material 초기화
-func _init_outline_material() -> void:
-	# Shader 로드
-	var shader = load("res://assets/shaders/outline.gdshader")
-	if not shader:
-		push_error("[Building] outline.gdshader를 찾을 수 없습니다!")
-		return
-
-	# ShaderMaterial 생성
-	outline_material = ShaderMaterial.new()
-	outline_material.shader = shader
-
-	# 외곽선 설정
-	outline_material.set_shader_parameter("outline_color", Color.BLACK)
-	outline_material.set_shader_parameter("outline_width", 2.0)
-
-
-## 외곽선 표시 (선택됨)
-func show_outline() -> void:
-	if sprite and outline_material:
-		sprite.material = outline_material
-		is_selected = true
-		print("[Building] 외곽선 표시: ", name)
-
-
-## 외곽선 제거 (선택 해제)
-func hide_outline() -> void:
-	if sprite:
-		sprite.material = null
-		is_selected = false
-		print("[Building] 외곽선 제거: ", name)
-
-
-# ============================================================
-# 유틸리티
-# ============================================================
-
-## 상태를 문자열로 변환 (디버그용)
-func _state_to_string(state: BuildingState) -> String:
-	match state:
-		BuildingState.NORMAL:
-			return "NORMAL"
-		BuildingState.INFECTING:
-			return "INFECTING"
-		BuildingState.INFECTED:
-			return "INFECTED"
-		_:
-			return "UNKNOWN"
+	selection_indicator.visible = is_selected
