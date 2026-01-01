@@ -27,6 +27,9 @@ const TILE_SIZE: Vector2i = Vector2i(32, 32)
 ## 건물 텍스처 크기 (픽셀)
 const BUILDING_SIZE: Vector2i = Vector2i(32, 32)
 
+## 유닛 텍스처 크기 (픽셀) - 타일의 70%
+const UNIT_SIZE: Vector2i = Vector2i(22, 22)
+
 
 # ============================================================
 # 그리드 시스템 설정

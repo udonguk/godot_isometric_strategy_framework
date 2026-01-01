@@ -79,14 +79,11 @@ func _handle_right_click() -> void:
 		push_warning("[InputManager] Navigation 불가능한 위치: ", grid_pos)
 		return
 
-	# 최종 목표는 월드 좌표로 전달
-	var target_world = GridSystem.grid_to_world(grid_pos)
-
-	# 선택된 모든 유닛에게 이동 명령
+	# 선택된 모든 유닛에게 이동 명령 (그리드 좌표 사용)
 	for unit in selected_units:
-		unit.move_to(target_world)
+		unit.move_to_grid(grid_pos)
 
-	print("[InputManager] 유닛 이동 명령 - Grid: %s, World: %s (유닛 %d개)" % [grid_pos, target_world, selected_units.size()])
+	print("[InputManager] 유닛 이동 명령 - Grid: %s (유닛 %d개)" % [grid_pos, selected_units.size()])
 
 
 # ============================================================

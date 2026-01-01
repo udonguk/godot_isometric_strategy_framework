@@ -135,10 +135,10 @@ func _create_test_buildings() -> void:
 
 ## 테스트용 유닛 생성
 func _create_test_units() -> void:
-	# 테스트 유닛 2개 생성 (그리드 (5, 5), (7, 7))
+	# 테스트 유닛 2개 생성 (오른쪽 끝)
 	var test_positions = [
-		Vector2i(5, 5),
-		Vector2i(7, 7)
+		Vector2i(15, 5),
+		Vector2i(18, 7)
 	]
 
 	for grid_pos in test_positions:
@@ -149,3 +149,4 @@ func _create_test_units() -> void:
 		test_units.append(unit)
 
 	print("[TestMap] 테스트 유닛 %d개 생성 완료" % test_units.size())
+	print("[TestMap] 좌클릭으로 유닛 선택, 우클릭으로 이동 명령")
