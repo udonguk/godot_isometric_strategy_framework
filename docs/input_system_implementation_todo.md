@@ -91,7 +91,7 @@
 
 ### Task 2.3: ClickPriority Enum 정의
 
-- [ ] `input_manager.gd`에 Enum 추가:
+- [x] `input_manager.gd`에 Enum 추가:
   ```gdscript
   enum ClickPriority {
       GROUND = 1,    # 땅 (최하위)
@@ -102,7 +102,7 @@
 
 ### Task 2.4: _unhandled_input() 구현
 
-- [ ] 기본 입력 처리 메서드 작성:
+- [x] 기본 입력 처리 메서드 작성:
   ```gdscript
   func _unhandled_input(event: InputEvent) -> void:
       if event is InputEventMouseButton and event.pressed:
@@ -114,49 +114,49 @@
 
 ### Task 2.5: _handle_left_click() 구현
 
-- [ ] 좌클릭 처리 메서드 작성
-- [ ] 우선순위 순서대로 검사 로직 구현:
-  1. [ ] 유닛 검사 (1순위)
-  2. [ ] 건물 검사 (2순위)
-  3. [ ] 빈 공간 처리 (3순위)
-- [ ] 각 케이스별 return 처리 추가
+- [x] 좌클릭 처리 메서드 작성
+- [x] 우선순위 순서대로 검사 로직 구현:
+  1. [x] 유닛 검사 (1순위)
+  2. [x] 건물 검사 (2순위)
+  3. [x] 빈 공간 처리 (3순위)
+- [x] 각 케이스별 return 처리 추가
 
 ### Task 2.6: _handle_right_click() 구현
 
-- [ ] 우클릭 처리 메서드 작성 (스켈레톤)
-- [ ] TODO 주석 추가: 이동 명령 구현 예정
+- [x] 우클릭 처리 메서드 작성 (완전 구현됨 - 이동 명령 포함)
+- [x] 이동 명령 구현 완료 (GridSystem 연동)
 
 ### Task 2.7: _query_entity_at() 구현
 
-- [ ] Physics Query 메서드 작성
-- [ ] 파라미터: `screen_pos: Vector2`, `layer: ClickPriority`
-- [ ] 구현 사항:
-  - [ ] 스크린 좌표 → 월드 좌표 변환
-  - [ ] `PhysicsPointQueryParameters2D` 생성
-  - [ ] `collision_mask` 설정 (Layer를 Mask로 비트 변환)
-  - [ ] `collide_with_areas = true` 설정
-  - [ ] `collide_with_bodies = true` 설정
-  - [ ] `space.intersect_point()` 호출
-  - [ ] 결과 반환 (없으면 `null`)
+- [x] Physics Query 메서드 작성
+- [x] 파라미터: `screen_pos: Vector2`, `layer: ClickPriority`
+- [x] 구현 사항:
+  - [x] 스크린 좌표 → 월드 좌표 변환
+  - [x] `PhysicsPointQueryParameters2D` 생성
+  - [x] `collision_mask` 설정 (Layer를 Mask로 비트 변환)
+  - [x] `collide_with_areas = true` 설정
+  - [x] `collide_with_bodies = true` 설정
+  - [x] `space.intersect_point()` 호출
+  - [x] 결과 반환 (없으면 빈 Dictionary)
 
 ### Task 2.8: _on_unit_clicked() 구현
 
-- [ ] 유닛 클릭 핸들러 작성
-- [ ] Ctrl 키 체크 로직 추가 (`Input.is_key_pressed(KEY_CTRL)`)
-- [ ] `SelectionManager.select_unit()` 호출
-- [ ] 디버그 로그 추가: `[InputManager] 유닛 클릭: {name}`
+- [x] 유닛 클릭 핸들러 작성
+- [x] Ctrl 키 체크 로직 추가 (`Input.is_key_pressed(KEY_CTRL)`)
+- [x] `SelectionManager.select_unit()` 호출
+- [x] 디버그 로그 추가: `[InputManager] 유닛 클릭: {name}`
 
 ### Task 2.9: _on_building_clicked() 구현
 
-- [ ] 건물 클릭 핸들러 작성
-- [ ] `SelectionManager.select_building()` 호출
-- [ ] 디버그 로그 추가: `[InputManager] 건물 클릭: {name}`
+- [x] 건물 클릭 핸들러 작성
+- [x] `SelectionManager.select_building()` 호출
+- [x] 디버그 로그 추가: `[InputManager] 건물 클릭: {name}`
 
 ### Task 2.10: _on_empty_space_clicked() 구현
 
-- [ ] 빈 공간 클릭 핸들러 작성
-- [ ] `SelectionManager.deselect_all()` 호출
-- [ ] 디버그 로그 추가: `[InputManager] 빈 공간 클릭`
+- [x] 빈 공간 클릭 핸들러 작성
+- [x] `SelectionManager.deselect_all()` 호출
+- [x] 디버그 로그 추가: `[InputManager] 빈 공간 클릭`
 
 ### Task 2.11: InputManager 테스트
 
@@ -172,55 +172,56 @@
 
 ### Task 3.1: UnitEntity 입력 처리 제거
 
-- [ ] `scripts/entity/unit_entity.gd` 파일 열기
-- [ ] 제거할 코드 확인:
-  - [ ] `input_pickable = true` 라인
-  - [ ] `input_event.connect()` 라인
-  - [ ] `_on_input_event()` 메서드 전체
-- [ ] 코드 제거 실행
-- [ ] 파일 저장
+- [x] `scripts/entity/unit_entity.gd` 파일 열기
+- [x] 제거할 코드 확인:
+  - [x] `input_pickable = true` 라인
+  - [x] `input_event.connect()` 라인
+  - [x] `_on_input_event()` 메서드 전체
+- [x] 코드 제거 실행
+- [x] 파일 저장
 
 ### Task 3.2: BuildingEntity 입력 처리 제거
 
-- [ ] `scripts/entity/building_entity.gd` 파일 열기
-- [ ] 제거할 코드 확인:
-  - [ ] `_on_area_input_event()` 메서드 전체
-  - [ ] Area2D의 `input_event` 시그널 연결 코드
-- [ ] 코드 제거 실행
-- [ ] 파일 저장
+- [x] `scripts/entity/building_entity.gd` 파일 열기
+- [x] 제거할 코드 확인:
+  - [x] `_on_area_input_event()` 메서드 전체
+  - [x] Area2D의 `input_event` 시그널 연결 코드
+- [x] 코드 제거 실행
+- [x] 파일 저장
 
 ### Task 3.3: TestMap 입력 처리 제거
 
-- [ ] `scripts/maps/test_map.gd` 파일 열기
-- [ ] 제거할 코드 확인:
-  - [ ] `_unhandled_input()` 메서드 전체
-  - [ ] `_on_empty_click()` 메서드 전체
-- [ ] 코드 제거 실행
-- [ ] 파일 저장
+- [x] `scripts/maps/test_map.gd` 파일 열기
+- [x] 제거할 코드 확인:
+  - [x] `_unhandled_input()` 메서드 전체
+  - [x] `_on_empty_click()` 메서드 전체
+- [x] 코드 제거 실행
+- [x] 파일 저장
 
 ### Task 3.4: Main 입력 처리 제거
 
-- [ ] `scripts/main.gd` 파일 열기
-- [ ] 제거할 코드 확인:
-  - [ ] `_unhandled_input()` 메서드 전체
-  - [ ] `_on_empty_click()` 메서드 전체
-- [ ] 코드 제거 실행
-- [ ] 파일 저장
+- [x] `scripts/main.gd` 파일 열기
+- [x] 제거할 코드 확인:
+  - [x] `_unhandled_input()` 메서드 전체 (선택 관련)
+  - [x] `_on_empty_click()` 메서드 전체
+- [x] 코드 제거 실행
+- [x] 파일 저장
+- [x] 참고: `_input()` 메서드는 스페이스바 테스트용이므로 유지됨
 
 ### Task 3.5: 이동 명령 로직 이동
 
-- [ ] `test_map.gd`의 `_on_move_command()` 메서드 찾기
-- [ ] 해당 로직을 `input_manager.gd`의 `_handle_right_click()`으로 이동
-- [ ] `test_map.gd`에서 `_on_move_command()` 제거
-- [ ] 좌표 변환이 필요하다면 `GridSystem` 사용 확인
-- [ ] 파일 저장
+- [x] `test_map.gd`의 `_on_move_command()` 메서드 찾기
+- [x] 해당 로직을 `input_manager.gd`의 `_handle_right_click()`으로 이동
+- [x] `test_map.gd`에서 `_on_move_command()` 제거
+- [x] 좌표 변환이 필요하다면 `GridSystem` 사용 확인
+- [x] 파일 저장
 
 ### Task 3.6: 코드 정리 확인
 
-- [ ] `scripts/entity/` 폴더 내 모든 엔티티 스크립트 검토
-- [ ] 입력 관련 코드가 남아있지 않은지 확인
-- [ ] `scripts/maps/` 폴더 내 모든 맵 스크립트 검토
-- [ ] `scripts/main.gd` 최종 검토
+- [x] `scripts/entity/` 폴더 내 모든 엔티티 스크립트 검토
+- [x] 입력 관련 코드가 남아있지 않은지 확인
+- [x] `scripts/maps/` 폴더 내 모든 맵 스크립트 검토
+- [x] `scripts/main.gd` 최종 검토
 
 ---
 
@@ -228,18 +229,19 @@
 
 ### Task 4.1: SelectionManager 연동 확인
 
-- [ ] `SelectionManager`가 Autoload로 등록되어 있는지 확인
-- [ ] `SelectionManager.select_unit()` 메서드 존재 확인
-- [ ] `SelectionManager.select_building()` 메서드 존재 확인
-- [ ] `SelectionManager.deselect_all()` 메서드 존재 확인
-- [ ] 없다면: SelectionManager 구현 필요 (별도 작업)
+- [x] `SelectionManager`가 Autoload로 등록되어 있는지 확인
+- [x] `SelectionManager.select_unit()` 메서드 존재 확인
+- [x] `SelectionManager.select_building()` 메서드 존재 확인
+- [x] `SelectionManager.deselect_all()` 메서드 존재 확인
+- [x] `SelectionManager.get_selected_units()` 메서드 존재 확인
 
 ### Task 4.2: GridSystem 좌표 변환 확인
 
-- [ ] `GridSystem`이 Autoload로 등록되어 있는지 확인
-- [ ] `GridSystem.grid_to_world()` 메서드 존재 확인
-- [ ] 이동 명령에서 좌표 변환 테스트
-- [ ] 없다면: 문서 참고하여 GridSystem 사용
+- [x] `GridSystem`이 Autoload로 등록되어 있는지 확인
+- [x] `GridSystem.grid_to_world()` 메서드 존재 확인
+- [x] `GridSystem.world_to_grid()` 메서드 존재 확인
+- [x] `GridSystem.is_valid_navigation_position()` 메서드 존재 확인
+- [x] InputManager에서 좌표 변환 사용 중
 
 ---
 
@@ -330,13 +332,13 @@
 
 ### Task 6.2: 코드 리뷰
 
-- [ ] SOLID 원칙 준수 확인:
-  - [ ] **Single Responsibility**: InputManager만 입력 처리 담당
-  - [ ] **Dependency Inversion**: GridSystem, SelectionManager 같은 추상화 사용
-- [ ] 주석 및 문서화 확인:
-  - [ ] 각 메서드에 독스트링 추가
-  - [ ] 복잡한 로직에 주석 추가
-- [ ] 코드 컨벤션 준수 확인 (`docs/code_convention.md`)
+- [x] SOLID 원칙 준수 확인:
+  - [x] **Single Responsibility**: InputManager만 입력 처리 담당
+  - [x] **Dependency Inversion**: GridSystem, SelectionManager 같은 추상화 사용
+- [x] 주석 및 문서화 확인:
+  - [x] 각 메서드에 독스트링 추가
+  - [x] 복잡한 로직에 주석 추가
+- [x] 코드 컨벤션 준수 확인 (class_name, extends, 타입 힌트 등)
 
 ### Task 6.3: 문서 업데이트
 

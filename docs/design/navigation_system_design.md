@@ -140,9 +140,9 @@ World (Node2D)
    ├─ GroundTileMapLayer (navigation_enabled = false ⚠️ 중요!)
    ├─ StructuresTileMapLayer
    └─ Entities (Node2D)
-      ├─ BuildingEntity (StaticBody2D, collision_layer = 4)
-      ├─ BuildingEntity (StaticBody2D, collision_layer = 4)
-      └─ UnitEntity (CharacterBody2D)
+	  ├─ BuildingEntity (StaticBody2D, collision_layer = 4)
+	  ├─ BuildingEntity (StaticBody2D, collision_layer = 4)
+	  └─ UnitEntity (CharacterBody2D)
 ```
 
 **핵심 포인트**:
