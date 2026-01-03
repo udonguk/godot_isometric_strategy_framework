@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=4 uid="uid://d1kb5y5eg0gjg"]
+[gd_scene load_steps=7 format=4 uid="uid://d1kb5y5eg0gjg"]
 
 [ext_resource type="PackedScene" uid="uid://chfukxx3gn4tp" path="res://scenes/tiles/ground_tilemaplayer.tscn" id="1_ybdod"]
 [ext_resource type="PackedScene" uid="uid://bqvuej70ij3wt" path="res://scenes/tiles/structures_tilemaplayer.tscn" id="2_2s55i"]
 [ext_resource type="Script" uid="uid://bhvy0odyl0tr" path="res://scripts/maps/test_map.gd" id="3_test_map"]
+[ext_resource type="PackedScene" uid="uid://dlb2d87du4wg2" path="res://scenes/entitys/unit_entity.tscn" id="4_a3b3n"]
 [ext_resource type="PackedScene" uid="uid://dd7kfdh2e3nv1" path="res://scenes/camera/rts_camera_2d.tscn" id="5_a3b3n"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_38prr"]
@@ -19,6 +20,7 @@ script = ExtResource("3_test_map")
 y_sort_enabled = true
 
 [node name="NavigationRegion2D" type="NavigationRegion2D" parent="World"]
+y_sort_enabled = true
 navigation_polygon = SubResource("NavigationPolygon_38prr")
 
 [node name="GroundTileMapLayer" parent="World/NavigationRegion2D" instance=ExtResource("1_ybdod")]
@@ -30,5 +32,8 @@ tile_map_data = PackedByteArray("AAAAAAEAAAAAAAAAAQAAAAIAAAAAAAAAAQAAAAMAAAAAAAA
 [node name="Entities" type="Node2D" parent="World/NavigationRegion2D"]
 z_index = 1
 y_sort_enabled = true
+
+[node name="UnitEntity" parent="World/NavigationRegion2D/Entities" instance=ExtResource("4_a3b3n")]
+position = Vector2(213, -2)
 
 [node name="RtsCamera2D" parent="." instance=ExtResource("5_a3b3n")]

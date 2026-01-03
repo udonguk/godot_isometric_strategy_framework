@@ -59,7 +59,6 @@ func _handle_left_click() -> void:
 		return
 
 	# 3순위: 빈 공간 처리
-	print("[InputManager] 빈 공간 클릭")
 	_on_empty_space_clicked()
 
 
