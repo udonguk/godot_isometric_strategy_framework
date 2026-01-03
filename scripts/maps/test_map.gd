@@ -75,7 +75,10 @@ func _ready() -> void:
 	# GridSystem 초기화 (최우선!)
 	GridSystem.initialize(ground_layer)
 
-	# NavigationServer2D 업데이트 대기
+	# NavigationRegion2D가 NavigationServer2D에 등록될 때까지 대기
+	# (보통 2-3 physics_frame 필요)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
 	await get_tree().physics_frame
 
 	# GridSystem에 Navigation Map 캐싱
@@ -110,7 +113,7 @@ func _create_test_buildings() -> void:
 	for x in range(start_x, start_x + grid_size):
 		for y in range(start_y, start_y + grid_size):
 			var grid_pos = Vector2i(x, y)
-			var building = building_manager.create_building(grid_pos)
+			var _building = building_manager.create_building(grid_pos)
 
 	# 생성 완료 로그
 	var total_count = building_manager.get_building_count()
