@@ -460,17 +460,17 @@ isometric-strategy-framework/
 **자세한 일정은 `docs/sprints/sprint_XX_character_system.md` 참조**
 
 ### Phase 1: 기본 유닛 구현
-- [ ] GameConfig에 UNIT_SIZE 추가
-- [ ] unit_entity.tscn 씬 생성 (CharacterBody2D + AnimatedSprite2D)
-- [ ] unit_entity.gd 기본 로직 (상태, 이동)
-- [ ] 8방향 애니메이션 리소스 설정
-- [ ] 테스트 맵에 유닛 배치 및 수동 이동 테스트
+- [x] GameConfig에 UNIT_SIZE 추가
+- [x] unit_entity.tscn 씬 생성 (CharacterBody2D + AnimatedSprite2D)
+- [x] unit_entity.gd 기본 로직 (상태, 이동)
+- [x] 8방향 애니메이션 리소스 설정
+- [x] 테스트 맵에 유닛 배치 및 수동 이동 테스트
 
 ### Phase 2: Navigation 통합
-- [ ] NavigationAgent2D 설정
-- [ ] 그리드 좌표 기반 이동 구현
-- [ ] 장애물 회피 테스트
-- [ ] InputManager 연동 (마우스 클릭 이동)
+- [x] NavigationAgent2D 설정
+- [x] 그리드 좌표 기반 이동 구현
+- [x] 장애물 회피 테스트
+- [x] InputManager 연동 (마우스 클릭 이동)
 
 ### Phase 3: NPC 시스템 (미래)
 - [ ] npc_entity.tscn 씬 생성
