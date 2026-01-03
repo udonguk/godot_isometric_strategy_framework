@@ -246,6 +246,108 @@
 
 ---
 
+### 2.11. 건설 시스템 (Construction System) - 추후 구현
+
+**핵심 원칙**: Resource 기반 데이터 주도 설계 (Data → Logic → UI 순서)
+
+#### 기능 요구사항
+- [ ] **건물 데이터 정의**: BuildingData Resource로 건물 정보 관리
+- [ ] **건물 타입 관리**: 여러 종류의 건물 (주택, 농장, 상점 등)
+- [ ] **건설 메뉴 UI**: 건물 목록 표시 및 선택
+- [ ] **배치 미리보기**: 선택한 건물을 그리드에 반투명 표시
+- [ ] **단일 건축**: 클릭으로 건물 1개 배치
+- [ ] **드래그 건축**: 드래그하여 연속 배치 (도로, 벽 등)
+- [ ] **건설 가능 검증**:
+  - 그리드 범위 내인가?
+  - 이미 건물이 있는가?
+  - 자원이 충분한가?
+- [ ] **건설 비용 차감**: 건물 배치 시 자원 소비
+- [ ] **건설 취소**: ESC 키로 건설 모드 해제
+
+#### 기술 요구사항
+
+**Resource 시스템:**
+- BuildingData (extends Resource)
+  - 건물 이름, 아이콘, 비용, 씬 파일
+  - 크기 (1x1, 2x2 등)
+  - 건설 시간 (옵션)
+- BuildingDatabase (Array[BuildingData])
+  - 모든 건물 데이터 중앙 관리
+
+**건설 로직:**
+- ConstructionManager (Autoload)
+  - 건설 모드 상태 관리
+  - 선택된 건물 데이터 추적
+  - 배치 미리보기 표시
+  - 건설 가능 여부 검증
+- BuildingPlacer (Node)
+  - 실제 건물 인스턴스 생성
+  - Resource에서 씬 로드
+
+**UI:**
+- ConstructionMenu (Control)
+  - 건물 버튼 목록
+  - BuildingData 기반 동적 생성
+  - 버튼 클릭 → Signal 발송
+- BuildingButton (Button)
+  - 건물 아이콘 표시
+  - 비용 표시
+  - 구매 가능 여부 시각화
+
+#### 완료 기준
+- [ ] BuildingData Resource로 건물 정보 정의
+- [ ] 에디터에서 .tres 파일로 건물 데이터 생성 (최소 3종)
+- [ ] 건설 메뉴에서 건물 선택 시 미리보기 표시
+- [ ] 클릭으로 건물 배치 성공
+- [ ] 드래그로 연속 건축 성공 (같은 건물 여러 개)
+- [ ] 자원 부족 시 건설 불가 메시지 표시
+- [ ] 중복 배치 방지 (빨간색 미리보기)
+
+#### 구현 순서 (권장)
+
+**Phase 1: 데이터 정의 (Resource)**
+1. BuildingData.gd 작성
+2. 에디터에서 House.tres, Farm.tres, Shop.tres 생성
+3. BuildingDatabase.gd로 목록 관리
+
+**Phase 2: 핵심 로직 (Placement)**
+1. ConstructionManager.gd 작성
+2. 코드로 강제 선택 (`current_building = House.tres`)
+3. 클릭 시 건물 인스턴스 생성 테스트
+4. 그리드 정렬 확인
+
+**Phase 3: UI 연결**
+1. ConstructionMenu.tscn 생성
+2. BuildingButton 동적 생성
+3. 버튼 클릭 → 건설 모드 전환
+4. 미리보기 스프라이트 표시
+
+**Phase 4: 고급 기능**
+1. 드래그 건축 구현
+2. 비용 시스템 연동
+3. 건설 불가 시각화 (빨간색)
+4. 건설 취소 (ESC)
+
+#### Resource 시스템 장점
+
+**✅ 재사용성**
+- 같은 데이터로 UI, 로직, 저장 시스템 모두 사용
+- 새 건물 추가 = .tres 파일 1개 생성
+
+**✅ 데이터 주도 개발**
+- 코드 수정 없이 건물 추가
+- 기획자가 직접 건물 데이터 편집 가능
+
+**✅ 확장성**
+- 나중에 업그레이드, 효과, 애니메이션 추가 용이
+- 모딩 지원 쉬움
+
+#### 참고 문서
+- `docs/design/building_construction_system_design.md`: 건설 시스템 상세 설계
+- `docs/design/resource_based_entity_design.md`: Resource 기반 엔티티 설계 패턴
+
+---
+
 ## 3. 우선순위 (Priorities)
 
 ### P0 (필수 구현 - MVP)
@@ -272,6 +374,11 @@
 ### P2 (추가 기능 - 확장성)
 게임 제작 시 필요한 추가 기능
 
+- [ ] **건설 시스템** (Resource 기반)
+  - [ ] BuildingData Resource 정의
+  - [ ] 건설 메뉴 UI
+  - [ ] 배치 미리보기
+  - [ ] 드래그 건축
 - [ ] 자원 시스템
 - [ ] UI 시스템 (HUD, 미니맵)
 - [ ] 건설 진행도 표시
