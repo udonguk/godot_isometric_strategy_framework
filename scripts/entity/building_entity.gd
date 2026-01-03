@@ -5,20 +5,6 @@ extends Node2D
 ## 감염 시스템의 핵심 엔티티
 
 # ============================================================
-# 상태 변수
-# ============================================================
-
-## 그리드 좌표 (논리적 위치)
-var grid_position: Vector2i = Vector2i.ZERO
-
-## 선택 상태 (SelectionManager가 사용)
-var is_selected: bool = false:
-	set(value):
-		is_selected = value
-		_update_selection_indicator()
-
-
-# ============================================================
 # 노드 참조 (씬에서 설정)
 # ============================================================
 
@@ -32,6 +18,20 @@ var is_selected: bool = false:
 ## SelectionIndicator 노드 참조 (선택 표시)
 ## 주의: 씬에 SelectionIndicator 노드가 있어야 함
 @onready var selection_indicator: Sprite2D = $SelectionIndicator if has_node("SelectionIndicator") else null
+
+
+# ============================================================
+# 상태 변수
+# ============================================================
+
+## 그리드 좌표 (논리적 위치)
+var grid_position: Vector2i = Vector2i.ZERO
+
+## 선택 상태 (SelectionManager가 사용)
+var is_selected: bool = false:
+	set(value):
+		is_selected = value
+		_update_selection_indicator()
 
 
 # ============================================================

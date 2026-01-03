@@ -18,7 +18,7 @@ extends Node
 var selected_units: Array[UnitEntity] = []
 
 ## 선택된 건물 (단일 선택만)
-var selected_building = null  # BuildingEntity 타입 (순환 참조 방지)
+var selected_building: BuildingEntity = null
 
 
 # ============================================================
@@ -88,7 +88,7 @@ func has_selected_units() -> bool:
 # ============================================================
 
 ## 건물 선택 (단일 선택만)
-func select_building(building) -> void:  # BuildingEntity 타입
+func select_building(building: BuildingEntity) -> void:
 	if not building:
 		push_warning("[SelectionManager] null 건물을 선택하려고 시도했습니다.")
 		return
@@ -116,7 +116,7 @@ func deselect_building() -> void:
 
 
 ## 선택된 건물 반환
-func get_selected_building():  # BuildingEntity 타입 반환
+func get_selected_building() -> BuildingEntity:
 	return selected_building
 
 

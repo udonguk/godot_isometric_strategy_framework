@@ -166,6 +166,18 @@ func stop_movement():
 
 
 # ============================================================
+# 선택 인디케이터
+# ============================================================
+
+func _update_selection_indicator():
+	"""선택 상태에 따라 인디케이터 표시/숨김"""
+	if not selection_indicator:
+		return
+
+	selection_indicator.visible = is_selected
+
+
+# ============================================================
 # 애니메이션 관련 메서드
 # ============================================================
 
@@ -277,15 +289,3 @@ func _to_string() -> String:
 		State.keys()[current_state],
 		Direction.keys()[current_direction]
 	]
-
-
-# ============================================================
-# 선택 인디케이터
-# ============================================================
-
-func _update_selection_indicator():
-	"""선택 상태에 따라 인디케이터 표시/숨김"""
-	if not selection_indicator:
-		return
-
-	selection_indicator.visible = is_selected

@@ -64,9 +64,7 @@ func create_building(grid_pos: Vector2i) -> Node2D:
 
 	# 월드 좌표 계산 (GridSystem 사용!)
 	# GridSystem이 TileMapLayer를 캡슐화하여 정확한 좌표 제공
-	# get_node()로 명시적 접근 (Autoload 인식 문제 우회)
-	var grid_system = get_node("/root/GridSystem")
-	var world_pos: Vector2 = grid_system.grid_to_world(grid_pos)
+	var world_pos: Vector2 = GridSystem.grid_to_world(grid_pos)
 	building.position = world_pos
 
 	# 씬 트리에 추가

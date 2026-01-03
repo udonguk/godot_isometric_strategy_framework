@@ -97,33 +97,6 @@ func _ready() -> void:
 
 
 # ============================================================
-# 건물 생성
-# ============================================================
-
-## 테스트용 건물들 생성 (3x3 그리드)
-func _create_test_buildings() -> void:
-	print("[TestMap] === 3x3 건물 자동 생성 시작 ===")
-
-	# 3x3 그리드 범위 설정
-	var grid_size: int = 3
-	var start_x: int = 0
-	var start_y: int = 0
-
-	# 이중 for문으로 건물 생성
-	for x in range(start_x, start_x + grid_size):
-		for y in range(start_y, start_y + grid_size):
-			var grid_pos = Vector2i(x, y)
-			var _building = building_manager.create_building(grid_pos)
-
-	# 생성 완료 로그
-	var total_count = building_manager.get_building_count()
-	print("[TestMap] === 건물 생성 완료: 총 ", total_count, "개 ===")
-
-	# 디버그: 모든 건물 정보 출력
-	building_manager.print_all_buildings()
-
-
-# ============================================================
 # 유닛 생성
 # ============================================================
 
