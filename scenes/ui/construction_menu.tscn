@@ -1,0 +1,88 @@
+[gd_scene load_steps=2 format=3 uid="uid://dthxpb84pgi56"]
+
+[ext_resource type="Script" uid="uid://bn0souqjeo424" path="res://scripts/ui/construction_menu.gd" id="1_mowy1"]
+
+[node name="ConstructionMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_mowy1")
+
+[node name="CollapsedBar" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -50.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="ExpandButton" type="Button" parent="CollapsedBar"]
+layout_mode = 0
+offset_right = 120.0
+offset_bottom = 50.0
+text = "건설 ▲"
+
+[node name="ExpandedPanel" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -200.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Header" type="HBoxContainer" parent="ExpandedPanel"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 40.0
+grow_horizontal = 2
+
+[node name="TitleLabel" type="Label" parent="ExpandedPanel/Header"]
+layout_mode = 2
+text = "건설 메뉴"
+
+[node name="CollapseButton" type="Button" parent="ExpandedPanel/Header"]
+layout_mode = 2
+text = "▼ 접기"
+
+[node name="Content" type="VBoxContainer" parent="ExpandedPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="ExpandedPanel/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 2
+
+[node name="BuildingList" type="HBoxContainer" parent="ExpandedPanel/Content/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HouseButton" type="Button" parent="ExpandedPanel/Content/ScrollContainer/BuildingList"]
+custom_minimum_size = Vector2(100, 60)
+layout_mode = 2
+text = "주택"
+
+[node name="FarmButton" type="Button" parent="ExpandedPanel/Content/ScrollContainer/BuildingList"]
+custom_minimum_size = Vector2(100, 60)
+layout_mode = 2
+text = "농장"
+
+[node name="ShopButton" type="Button" parent="ExpandedPanel/Content/ScrollContainer/BuildingList"]
+custom_minimum_size = Vector2(100, 60)
+layout_mode = 2
+text = "상점"

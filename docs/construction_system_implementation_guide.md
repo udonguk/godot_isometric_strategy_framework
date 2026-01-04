@@ -36,97 +36,166 @@ Phase 4: 통합 (실제 동작)
 
 ---
 
-## 📋 Phase 1: 최소 UI (Resource 없이, 로그만)
+## 📋 Phase 1: 최소 UI (하단 바, 로그만)
 
 ### 🎯 목표
-- 버튼 3개 (주택, 농장, 상점) 생성
+- 하단 고정 바 UI 구조 생성 (모바일 호환)
+- 접힌 상태 (50px) / 펼쳐진 상태 (200px)
+- 버튼 3개 (주택, 농장, 상점) 가로 배치
+- 펼침/접기 버튼으로 메뉴 제어
 - 클릭하면 **콘솔에 로그만 출력**
-- B 키로 메뉴 열기/닫기
 
 ### 📦 의존성
 - 없음 (완전 독립)
 
 ### ⏱️ 소요 시간
-- 15분
+- 30분
 
 ---
 
 ### ✅ Todo 체크리스트
 
-- [ ] SimpleConstructionMenu.tscn 씬 생성
-- [ ] 버튼 3개 추가 (주택/농장/상점)
-- [ ] 버튼 클릭 시 로그만 출력하는 스크립트 작성
-- [ ] B 키로 메뉴 열기/닫기 구현
-- [ ] 테스트: 버튼 클릭하면 콘솔에 로그 출력 확인
+- [x] ConstructionMenu.tscn 씬 생성 (Full Rect)
+- [x] CollapsedBar (Panel) 추가 - 하단 50px
+- [x] ExpandButton 추가 ("건설 ▲")
+- [x] ExpandedPanel (Panel) 추가 - 하단 200px
+- [x] Header 추가 (TitleLabel + CollapseButton)
+- [x] BuildingList (HBoxContainer) 가로 배치
+- [x] ScrollContainer 설정 (horizontal)
+- [x] 버튼 3개 추가 (주택, 농장, 상점)
+- [x] 스크립트 작성 (펼침/접기 + 로그 출력)
+- [x] test_map.tscn에 추가
+- [x] 테스트: 펼침/접기 동작 확인
+- [x] 테스트: 버튼 클릭 시 로그 출력 확인
 
 ---
 
 ### 📝 상세 단계
 
-#### 1-1. SimpleConstructionMenu.tscn 생성
+#### 1-1. ConstructionMenu.tscn 생성 (하단 바 구조)
 
 **Godot 에디터:**
 
 ```
 1. Scene → New Scene
 2. Other Node → Control 선택
-3. 이름: SimpleConstructionMenu
+3. 이름: ConstructionMenu
 4. Inspector 설정:
    - Layout → Anchors Preset: Full Rect
-   - Visibility → Visible: false (초기 숨김)
 5. Scene → Save Scene As
-   - 경로: scenes/ui/simple_construction_menu.tscn
+   - 경로: scenes/ui/construction_menu.tscn
 ```
 
 **노드 구조 추가:**
 
 ```
-SimpleConstructionMenu (Control)
-└── Panel (Panel)
-    └── VBoxContainer (VBoxContainer)
-        ├── TitleLabel (Label, text: "건물 선택 (테스트)")
-        ├── HouseButton (Button, text: "주택")
-        ├── FarmButton (Button, text: "농장")
-        └── ShopButton (Button, text: "상점")
+ConstructionMenu (Control, Full Rect)
+├── CollapsedBar (Panel)  # 접힌 상태 바
+│   └── ExpandButton (Button, text: "건설 ▲")
+└── ExpandedPanel (Panel)  # 펼쳐진 상태
+    ├── Header (HBoxContainer)
+    │   ├── TitleLabel (Label, text: "건설 메뉴")
+    │   └── CollapseButton (Button, text: "▼ 접기")
+    └── Content (VBoxContainer)
+        └── ScrollContainer (horizontal)
+            └── BuildingList (HBoxContainer)  # 가로 배치!
+                ├── HouseButton (Button, text: "주택")
+                ├── FarmButton (Button, text: "농장")
+                └── ShopButton (Button, text: "상점")
 ```
 
 **노드 추가 방법:**
-1. SimpleConstructionMenu 우클릭 → Add Child Node
-2. Panel 검색 → Create
-3. Panel 우클릭 → Add Child Node
-4. VBoxContainer 검색 → Create
-5. 반복해서 Label, Button 추가
 
-**Panel 설정:**
-- Layout → Center
-- Size: (300, 400)
+1. **CollapsedBar (Panel) 추가**
+   - Layout → Bottom (Full Width)
+   - Anchor: Left=0, Right=1, Top=1, Bottom=1
+   - Offset: Top=-50, Bottom=0
 
-**VBoxContainer 설정:**
-- Layout → Full Rect
-- Theme Overrides → Constants → Separation: 10
+2. **ExpandButton (Button) 추가**
+   - Text: "건설 ▲"
+   - Size: (120, 50)
+
+3. **ExpandedPanel (Panel) 추가**
+   - Layout → Bottom (Full Width)
+   - Anchor: Left=0, Right=1, Top=1, Bottom=1
+   - Offset: Top=-200, Bottom=0
+   - Visible: false (초기 숨김)
+
+4. **Header (HBoxContainer) 추가**
+   - Size: (화면 너비, 40)
+
+5. **Content → ScrollContainer → BuildingList (HBoxContainer) 추가**
+   - ScrollContainer: Horizontal Scroll Enabled
+   - BuildingList: Separation = 10
+
+**CollapsedBar 설정:**
+- 높이: 50px
+- 배경: 반투명 검은색
+
+**ExpandedPanel 설정:**
+- 높이: 200px
+- 배경: 반투명 검은색
+
+**BuildingList 설정:**
+- Alignment: Begin
+- Separation: 10
 
 #### 1-2. 스크립트 작성 (로그만!)
 
-**파일:** `scripts/ui/simple_construction_menu.gd`
+**파일:** `scripts/ui/construction_menu.gd`
 
 ```gdscript
-# scripts/ui/simple_construction_menu.gd
+# scripts/ui/construction_menu.gd
 extends Control
 
-@onready var house_button: Button = $Panel/VBoxContainer/HouseButton
-@onready var farm_button: Button = $Panel/VBoxContainer/FarmButton
-@onready var shop_button: Button = $Panel/VBoxContainer/ShopButton
+# 노드 참조
+@onready var collapsed_bar: Panel = $CollapsedBar
+@onready var expanded_panel: Panel = $ExpandedPanel
+@onready var expand_button: Button = $CollapsedBar/ExpandButton
+@onready var collapse_button: Button = $ExpandedPanel/Header/CollapseButton
+
+@onready var house_button: Button = $ExpandedPanel/Content/ScrollContainer/BuildingList/HouseButton
+@onready var farm_button: Button = $ExpandedPanel/Content/ScrollContainer/BuildingList/FarmButton
+@onready var shop_button: Button = $ExpandedPanel/Content/ScrollContainer/BuildingList/ShopButton
+
+# 상태
+var is_expanded: bool = false
 
 func _ready():
-    # 버튼 시그널 연결
+    # 시그널 연결
+    expand_button.pressed.connect(_on_expand_button_pressed)
+    collapse_button.pressed.connect(_on_collapse_button_pressed)
+
     house_button.pressed.connect(_on_house_button_pressed)
     farm_button.pressed.connect(_on_farm_button_pressed)
     shop_button.pressed.connect(_on_shop_button_pressed)
 
-    # 초기 상태: 숨김
-    visible = false
+    # 초기 상태: 접힘
+    _set_collapsed()
 
-    print("[Phase 1] SimpleConstructionMenu 준비 완료")
+    print("[Phase 1] ConstructionMenu 준비 완료 (하단 바)")
+
+# 펼치기
+func _on_expand_button_pressed():
+    _set_expanded()
+
+# 접기
+func _on_collapse_button_pressed():
+    _set_collapsed()
+
+# 상태 변경: 펼침
+func _set_expanded():
+    is_expanded = true
+    collapsed_bar.visible = false
+    expanded_panel.visible = true
+    print("[Phase 1] 메뉴 펼침")
+
+# 상태 변경: 접힘
+func _set_collapsed():
+    is_expanded = false
+    collapsed_bar.visible = true
+    expanded_panel.visible = false
+    print("[Phase 1] 메뉴 접힘")
 
 # ⭐ Resource 없이 로그만 출력!
 func _on_house_button_pressed():
@@ -140,19 +209,12 @@ func _on_farm_button_pressed():
 func _on_shop_button_pressed():
     print("[Phase 1] 상점 버튼 클릭!")
     get_viewport().set_input_as_handled()
-
-# B 키로 메뉴 토글
-func _input(event):
-    if event.is_action_pressed("ui_text_backspace"):  # B 키
-        visible = !visible
-        print("[Phase 1] 메뉴 토글:", visible)
-        get_viewport().set_input_as_handled()
 ```
 
 **스크립트 연결 방법:**
-1. SimpleConstructionMenu 노드 선택
+1. ConstructionMenu 노드 선택
 2. Inspector → Script → Attach Script
-3. 경로: scripts/ui/simple_construction_menu.gd
+3. 경로: scripts/ui/construction_menu.gd
 4. 위 코드 붙여넣기
 
 #### 1-3. test_map.tscn에 추가
@@ -164,14 +226,14 @@ TestMap (Node2D)
 ├── World
 ├── Managers
 └── UI (CanvasLayer)
-    └── SimpleConstructionMenu (인스턴스) ← 추가
+    └── ConstructionMenu (인스턴스) ← 추가
 ```
 
 **추가 방법:**
 1. test_map.tscn 열기
 2. UI (CanvasLayer) 노드 우클릭
 3. Instantiate Child Scene
-4. scenes/ui/simple_construction_menu.tscn 선택
+4. scenes/ui/construction_menu.tscn 선택
 
 #### 1-4. 테스트
 
@@ -181,28 +243,37 @@ F5 (또는 재생 버튼)
 ```
 
 **테스트 시나리오:**
-1. B 키 누르기 → 메뉴 나타남
+1. "건설 ▲" 버튼 클릭/터치 → 메뉴 펼쳐짐
 2. "주택" 버튼 클릭 → 콘솔 확인
 3. "농장" 버튼 클릭 → 콘솔 확인
-4. B 키 다시 누르기 → 메뉴 사라짐
+4. "▼ 접기" 버튼 클릭 → 메뉴 접힘
 
 **기대 출력 (콘솔):**
 ```
-[Phase 1] SimpleConstructionMenu 준비 완료
-[Phase 1] 메뉴 토글: true
+[Phase 1] ConstructionMenu 준비 완료 (하단 바)
+[Phase 1] 메뉴 펼침
 [Phase 1] 주택 버튼 클릭!
 [Phase 1] 농장 버튼 클릭!
-[Phase 1] 메뉴 토글: false
+[Phase 1] 메뉴 접힘
 ```
+
+**PC 및 모바일 확인:**
+- ✅ 하단 바가 화면 하단에 고정됨
+- ✅ 접힌 상태: 50px만 차지
+- ✅ 펼쳐진 상태: 200px 차지
+- ✅ 버튼이 가로로 나열됨
+- ✅ 터치/클릭 모두 동작
 
 ---
 
 ### ✅ Phase 1 완료 조건
 
-- [x] B 키로 메뉴 열림/닫힘
+- [x] 펼침/접기 버튼으로 메뉴 제어
+- [x] 하단 바가 화면 하단에 고정
 - [x] 버튼 클릭하면 콘솔에 로그 출력
 - [x] Resource, ConstructionManager 등 전혀 없음
 - [x] UI 동작만 확인
+- [x] 모바일 호환 (터치 가능)
 
 **완료 후:** Phase 2 또는 Phase 3 진행 가능 (독립적)
 
@@ -786,50 +857,79 @@ func test_construction_manager():
 
 ### 📝 상세 단계
 
-#### 4-1. SimpleConstructionMenu 수정
+#### 4-1. ConstructionMenu 수정 (하단 바 + Resource 연결)
 
-**파일:** `scripts/ui/simple_construction_menu.gd` (수정)
+**파일:** `scripts/ui/construction_menu.gd` (수정)
 
 ```gdscript
-# scripts/ui/simple_construction_menu.gd
+# scripts/ui/construction_menu.gd
 extends Control
 
-@onready var house_button: Button = $Panel/VBoxContainer/HouseButton
-@onready var farm_button: Button = $Panel/VBoxContainer/FarmButton
-@onready var shop_button: Button = $Panel/VBoxContainer/ShopButton
+# 노드 참조
+@onready var collapsed_bar: Panel = $CollapsedBar
+@onready var expanded_panel: Panel = $ExpandedPanel
+@onready var expand_button: Button = $CollapsedBar/ExpandButton
+@onready var collapse_button: Button = $ExpandedPanel/Header/CollapseButton
+
+@onready var house_button: Button = $ExpandedPanel/Content/ScrollContainer/BuildingList/HouseButton
+@onready var farm_button: Button = $ExpandedPanel/Content/ScrollContainer/BuildingList/FarmButton
+@onready var shop_button: Button = $ExpandedPanel/Content/ScrollContainer/BuildingList/ShopButton
+
+# 상태
+var is_expanded: bool = false
 
 func _ready():
+    # 시그널 연결
+    expand_button.pressed.connect(_on_expand_button_pressed)
+    collapse_button.pressed.connect(_on_collapse_button_pressed)
+
     house_button.pressed.connect(_on_house_button_pressed)
     farm_button.pressed.connect(_on_farm_button_pressed)
     shop_button.pressed.connect(_on_shop_button_pressed)
-    visible = false
 
-    print("[Phase 4] SimpleConstructionMenu (통합 버전) 준비 완료")
+    # 초기 상태: 접힘
+    _set_collapsed()
+
+    print("[Phase 4] ConstructionMenu (하단 바 + Resource 통합) 준비 완료")
+
+# 펼치기
+func _on_expand_button_pressed():
+    _set_expanded()
+
+# 접기
+func _on_collapse_button_pressed():
+    _set_collapsed()
+
+# 상태 변경: 펼침
+func _set_expanded():
+    is_expanded = true
+    collapsed_bar.visible = false
+    expanded_panel.visible = true
+
+# 상태 변경: 접힘
+func _set_collapsed():
+    is_expanded = false
+    collapsed_bar.visible = true
+    expanded_panel.visible = false
 
 # ⭐ Phase 4: Resource 연결!
 func _on_house_button_pressed():
     var house_data = load("res://scripts/resources/house_01.tres") as BuildingData
     ConstructionManager.select_building(house_data)
-    hide()  # 메뉴 닫기
+    # ⭐ 메뉴 유지 (닫지 않음) - 빠른 재선택 가능
     print("[Phase 4] 주택 선택 → ConstructionManager 호출")
     get_viewport().set_input_as_handled()
 
 func _on_farm_button_pressed():
     var farm_data = load("res://scripts/resources/farm_01.tres") as BuildingData
     ConstructionManager.select_building(farm_data)
-    hide()
+    # ⭐ 메뉴 유지
     print("[Phase 4] 농장 선택 → ConstructionManager 호출")
     get_viewport().set_input_as_handled()
 
 func _on_shop_button_pressed():
     print("[Phase 4] 상점은 아직 Resource 없음")
     get_viewport().set_input_as_handled()
-
-# B 키로 토글
-func _input(event):
-    if event.is_action_pressed("ui_text_backspace"):  # B 키
-        visible = !visible
-        get_viewport().set_input_as_handled()
 ```
 
 #### 4-2. test_map.gd 테스트 함수 비활성화
@@ -847,7 +947,7 @@ func _ready():
     print("\n========================================")
     print("Phase 4: 통합 테스트")
     print("========================================")
-    print("B 키를 눌러 건설 메뉴를 열고 버튼을 클릭하세요.\n")
+    print("하단의 '건설 ▲' 버튼을 클릭하여 메뉴를 열고 건물을 선택하세요.\n")
 ```
 
 #### 4-3. 최종 테스트
@@ -857,31 +957,37 @@ func _ready():
 **테스트 시나리오:**
 
 ```
-1. B 키 누르기
-   → 건설 메뉴 나타남
+1. 하단 "건설 ▲" 버튼 클릭
+   → 건설 메뉴 펼쳐짐
 
 2. "주택" 버튼 클릭
-   → 메뉴 사라짐
+   → 메뉴 유지 (펼쳐진 상태)
    → 반투명 주택이 마우스 따라다님
    → 녹색/빨간색으로 색상 변경
 
 3. 빈 공간 클릭
    → 건물 배치됨
    → 미리보기 사라짐
+   → 메뉴는 여전히 펼쳐진 상태 (빠른 재선택 가능)
 
-4. B 키 → "농장" 버튼 클릭
+4. "농장" 버튼 클릭
    → 농장 미리보기 나타남
 
 5. ESC 키
    → 건설 취소
    → 미리보기 사라짐
+   → 메뉴는 여전히 펼쳐진 상태
+
+6. "▼ 접기" 버튼 클릭
+   → 메뉴 접힘 (하단 50px만)
 ```
 
 **기대 출력:**
 ```
 Phase 4: 통합 테스트
-B 키를 눌러 건설 메뉴를 열고 버튼을 클릭하세요.
+하단의 '건설 ▲' 버튼을 클릭하여 메뉴를 열고 건물을 선택하세요.
 
+[Phase 4] ConstructionMenu (하단 바 + Resource 통합) 준비 완료
 [Phase 4] 주택 선택 → ConstructionManager 호출
 [Phase 3] 건물 선택: 주택
 [Phase 3] 건물 배치 성공: 주택 at (10, 8)
@@ -895,25 +1001,28 @@ B 키를 눌러 건설 메뉴를 열고 버튼을 클릭하세요.
 
 ### ✅ Phase 4 완료 조건
 
-- [x] B 키로 메뉴 열림
+- [x] "건설 ▲" 버튼으로 메뉴 펼침
 - [x] 버튼 클릭 → 미리보기 표시
 - [x] 미리보기가 마우스 따라다님
 - [x] 녹색/빨간색 색상 변경
 - [x] 클릭 → 건물 배치
+- [x] 건물 배치 후에도 메뉴 유지 (빠른 재선택)
+- [x] "▼ 접기" 버튼으로 메뉴 접힘
 - [x] ESC → 건설 취소
 
-**🎉 모든 Phase 완료!**
+**🎉 모든 Phase 완료! 하단 바 건설 메뉴 완성!**
 
 ---
 
 ## 📊 전체 체크리스트
 
-### Phase 1: 최소 UI
-- [ ] SimpleConstructionMenu.tscn 생성
-- [ ] 버튼 3개 추가
-- [ ] 로그 출력 스크립트
-- [ ] B 키 토글
-- [ ] 테스트 완료
+### Phase 1: 최소 UI (하단 바)
+- [x] ConstructionMenu.tscn 생성 (하단 고정 바)
+- [x] CollapsedBar + ExpandedPanel 구조
+- [x] 펼침/접기 버튼 추가
+- [x] 버튼 3개 가로 배치
+- [x] 로그 출력 스크립트
+- [x] 테스트 완료
 
 ### Phase 2: Resource
 - [ ] EntityData.gd
@@ -987,8 +1096,9 @@ if sprite:  # ✅ null 체크
 
 ## 📚 참고 문서
 
+- `docs/design/construction_menu_ui_redesign.md` - 하단 바 UI 재설계 (⭐ 최신 UI 디자인)
 - `docs/design/building_construction_system_design.md` - 데이터 + 로직 설계
-- `docs/design/ui_system_design.md` - UI 상세 설계
+- `docs/design/ui_system_design.md` - 전체 UI 시스템 설계
 - `docs/design/resource_based_entity_design.md` - Resource 패턴
 - `docs/prd.md` - 전체 요구사항
 
@@ -1022,13 +1132,16 @@ Phase 4 완료 후:
 **모든 Phase 완료 시:**
 
 ```
-✓ B 키로 메뉴 열림
+✓ 하단 "건설 ▲" 버튼으로 메뉴 펼침
 ✓ 버튼 클릭 → 미리보기
 ✓ 마우스 따라다님
 ✓ 녹색/빨간색 표시
 ✓ 클릭으로 배치
-✓ ESC로 취소
+✓ 건물 배치 후에도 메뉴 유지 (빠른 재선택)
+✓ "▼ 접기" 버튼으로 메뉴 접힘
+✓ ESC로 건설 취소
 ✓ 여러 건물 배치 가능
+✓ 모바일 호환 (터치 동작)
 ```
 
-**축하합니다! 건설 시스템 기본 구현 완료! 🎉**
+**축하합니다! 하단 바 건설 시스템 완성! 🎉**

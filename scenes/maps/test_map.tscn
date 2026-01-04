@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=4 uid="uid://d1kb5y5eg0gjg"]
+[gd_scene load_steps=7 format=4 uid="uid://d1kb5y5eg0gjg"]
 
 [ext_resource type="PackedScene" uid="uid://chfukxx3gn4tp" path="res://scenes/tiles/ground_tilemaplayer.tscn" id="1_ybdod"]
 [ext_resource type="PackedScene" uid="uid://bqvuej70ij3wt" path="res://scenes/tiles/structures_tilemaplayer.tscn" id="2_2s55i"]
 [ext_resource type="Script" uid="uid://bhvy0odyl0tr" path="res://scripts/maps/test_map.gd" id="3_test_map"]
 [ext_resource type="PackedScene" uid="uid://dd7kfdh2e3nv1" path="res://scenes/camera/rts_camera_2d.tscn" id="5_a3b3n"]
+[ext_resource type="PackedScene" uid="uid://dthxpb84pgi56" path="res://scenes/ui/construction_menu.tscn" id="5_qoqmi"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_38prr"]
 vertices = PackedVector2Array(144, 32, 192, 24, 208, 32, 160, 104, 144, 96, 128, 40, 176, 16, 656, 0, 672, 8, 656, 16, 0, 24, -16, 16, 0, 8, 176, 0, 192, 8, 128, -40, 112, -48, 128, -56, 640, -8, 640, 24, 624, -16, 624, 32, 608, -24, 608, 40, 592, -32, 592, 48, 576, -40, 576, 56, 560, -48, 560, 64, 544, -56, 544, 72, 528, -64, 528, 80, 512, -72, 512, 88, 496, -80, 496, 96, 480, -88, 480, 104, 464, -96, 464, 112, 448, -104, 448, 120, 432, -112, 432, 128, 416, -120, 416, 136, 400, -128, 400, 144, 384, -136, 384, 152, 368, -144, 368, 160, 352, -152, 352, 168, 336, -160, 320, -152, 304, -144, 288, -136, 272, -128, 256, -120, 240, -112, 224, -104, 208, -96, 272, 32, 16, 32, 16, 16, 160, -8, 128, 24, 144, -16, 112, 16, 128, -24, 112, -32, 80, -32, 96, -40, 96, 24, 64, -24, 80, 32, 64, 24, 48, -16, 48, 16, 32, -8, 32, 8, 16, 0, 32, 24, 32, 40, 48, 32, 48, 48, 64, 40, 64, 56, 80, 48, 80, 64, 96, 72, 96, 40, 112, 80, 112, 32, 128, 88, 176, 112, 224, 40, 192, 120, 240, 48, 208, 128, 224, 136, 240, 144, 256, 152, 256, 40, 272, 160, 288, 168, 144, -32, 144, -64, 160, -24, 160, -72, 176, -16, 176, -80, 192, -8, 192, -88, 208, 0, 224, 8, 336, 176, 304, 176, 240, 16, 320, 184, 256, 24)
@@ -33,3 +34,7 @@ z_index = 1
 y_sort_enabled = true
 
 [node name="RtsCamera2D" parent="." instance=ExtResource("5_a3b3n")]
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="ConstructionMenu" parent="UI" instance=ExtResource("5_qoqmi")]
