@@ -107,31 +107,36 @@ func _on_button_pressed():
 
 타이쿤 게임의 **핵심 UI**입니다.
 
-### 3.1. Phase 1: 최소 UI (하드코딩) ⭐ 30분 완성
+### 3.1. Phase 1: 최소 UI (하단 바, 모바일 호환) ⭐ 30분 완성
 
-**목표:** 버튼 3개로 건물 배치 테스트
+**목표:** 하단 고정 바로 건물 배치 테스트 (모바일 호환)
 
 #### 씬 구조
 
-**파일:** `scenes/ui/simple_construction_menu.tscn`
+**파일:** `scenes/ui/construction_menu.tscn`
 
 ```
-SimpleConstructionMenu (Control)
-├── Panel (배경)
-│   ├── VBoxContainer
-│   │   ├── TitleLabel (Label: "건물 건설")
-│   │   ├── HouseButton (Button: "주택 (100G)")
-│   │   ├── FarmButton (Button: "농장 (150G)")
-│   │   └── ShopButton (Button: "상점 (200G)")
-│   └── CloseButton (Button: "X")
+ConstructionMenu (Control, Full Rect)
+├── CollapsedBar (Panel)  # 접힌 상태 바 (하단 50px)
+│   └── ExpandButton (Button, text: "건설 ▲")
+└── ExpandedPanel (Panel)  # 펼쳐진 상태 (하단 200px)
+    ├── Header (HBoxContainer)
+    │   ├── TitleLabel (Label, text: "건설 메뉴")
+    │   └── CollapseButton (Button, text: "▼ 접기")
+    └── Content (VBoxContainer)
+        └── ScrollContainer (horizontal)
+            └── BuildingList (HBoxContainer)  # 가로 배치!
+                ├── HouseButton (Button: "주택")
+                ├── FarmButton (Button: "농장")
+                └── ShopButton (Button: "상점")
 ```
 
-#### 스크립트 (하드코딩 버전)
+#### 스크립트 (하단 바 버전)
 
-**파일:** `scripts/ui/simple_construction_menu.gd`
+**파일:** `scripts/ui/construction_menu.gd`
 
 ```gdscript
-# scripts/ui/simple_construction_menu.gd
+# scripts/ui/construction_menu.gd
 extends Control
 
 # 건물 씬 (하드코딩)
@@ -139,46 +144,69 @@ const HOUSE_SCENE = preload("res://scenes/entity/building_entity.tscn")
 const FARM_SCENE = preload("res://scenes/entity/building_entity.tscn")  # 일단 같은 씬
 const SHOP_SCENE = preload("res://scenes/entity/building_entity.tscn")
 
-# UI 요소
-@onready var house_button: Button = $Panel/VBoxContainer/HouseButton
-@onready var farm_button: Button = $Panel/VBoxContainer/FarmButton
-@onready var shop_button: Button = $Panel/VBoxContainer/ShopButton
-@onready var close_button: Button = $Panel/CloseButton
+# 노드 참조
+@onready var collapsed_bar: Panel = $CollapsedBar
+@onready var expanded_panel: Panel = $ExpandedPanel
+@onready var expand_button: Button = $CollapsedBar/ExpandButton
+@onready var collapse_button: Button = $ExpandedPanel/Header/CollapseButton
+
+@onready var house_button: Button = $ExpandedPanel/Content/ScrollContainer/BuildingList/HouseButton
+@onready var farm_button: Button = $ExpandedPanel/Content/ScrollContainer/BuildingList/FarmButton
+@onready var shop_button: Button = $ExpandedPanel/Content/ScrollContainer/BuildingList/ShopButton
+
+# 상태
+var is_expanded: bool = false
 
 func _ready():
-    # 버튼 연결
+    # 시그널 연결
+    expand_button.pressed.connect(_on_expand_button_pressed)
+    collapse_button.pressed.connect(_on_collapse_button_pressed)
+
     house_button.pressed.connect(_on_house_button_pressed)
     farm_button.pressed.connect(_on_farm_button_pressed)
     shop_button.pressed.connect(_on_shop_button_pressed)
-    close_button.pressed.connect(_on_close_button_pressed)
 
-    # 초기 상태: 숨김
-    visible = false
+    # 초기 상태: 접힘
+    _set_collapsed()
+
+# 펼치기
+func _on_expand_button_pressed():
+    _set_expanded()
+
+# 접기
+func _on_collapse_button_pressed():
+    _set_collapsed()
+
+# 상태 변경: 펼침
+func _set_expanded():
+    is_expanded = true
+    collapsed_bar.visible = false
+    expanded_panel.visible = true
+
+# 상태 변경: 접힘
+func _set_collapsed():
+    is_expanded = false
+    collapsed_bar.visible = true
+    expanded_panel.visible = false
 
 func _on_house_button_pressed():
     # ConstructionManager에 건물 선택 알림
     var construction_manager = get_node("/root/TestMap/Managers/ConstructionManager")
     construction_manager.select_building_scene(HOUSE_SCENE, "주택")
-    hide()  # 메뉴 닫기
+    # ⭐ 메뉴 유지 (닫지 않음) - 빠른 재선택 가능
+    get_viewport().set_input_as_handled()
 
 func _on_farm_button_pressed():
     var construction_manager = get_node("/root/TestMap/Managers/ConstructionManager")
     construction_manager.select_building_scene(FARM_SCENE, "농장")
-    hide()
+    # ⭐ 메뉴 유지
+    get_viewport().set_input_as_handled()
 
 func _on_shop_button_pressed():
     var construction_manager = get_node("/root/TestMap/Managers/ConstructionManager")
     construction_manager.select_building_scene(SHOP_SCENE, "상점")
-    hide()
-
-func _on_close_button_pressed():
-    hide()
-
-# 단축키로 열기 (B 키)
-func _input(event):
-    if event.is_action_pressed("toggle_construction_menu"):
-        visible = !visible
-        get_viewport().set_input_as_handled()
+    # ⭐ 메뉴 유지
+    get_viewport().set_input_as_handled()
 ```
 
 #### ConstructionManager 간단 버전
@@ -288,13 +316,32 @@ func cancel_construction():
     preview_sprite.visible = false
 ```
 
-#### 입력 액션 설정
+#### 레이아웃 설정
 
-**프로젝트 설정 → Input Map:**
-
+**CollapsedBar (접힌 바):**
+```gdscript
+# Inspector 설정:
+- Layout: Bottom (Full Width)
+- Anchor Left: 0, Right: 1, Top: 1, Bottom: 1
+- Offset Top: -50, Bottom: 0
+- Size: (화면 너비, 50)
 ```
-toggle_construction_menu: B 키
-ui_cancel: ESC 키 (기본값)
+
+**ExpandedPanel (펼쳐진 패널):**
+```gdscript
+# Inspector 설정:
+- Layout: Bottom (Full Width)
+- Anchor Left: 0, Right: 1, Top: 1, Bottom: 1
+- Offset Top: -200, Bottom: 0
+- Size: (화면 너비, 200)
+- Visible: false (초기 숨김)
+```
+
+**ScrollContainer:**
+```gdscript
+# Inspector 설정:
+- Horizontal Scroll: Enabled
+- Vertical Scroll: Disabled
 ```
 
 #### 테스트 시나리오
@@ -302,33 +349,39 @@ ui_cancel: ESC 키 (기본값)
 **30분 안에 완성 후 테스트:**
 
 1. ✅ F5로 게임 실행
-2. ✅ B 키로 건설 메뉴 열기
-3. ✅ "주택" 버튼 클릭
-4. ✅ 마우스 따라다니는 반투명 건물 표시
-5. ✅ 녹색/빨간색으로 건설 가능 여부 표시
-6. ✅ 클릭으로 건물 배치
-7. ✅ ESC로 건설 취소
+2. ✅ 하단에 "건설 ▲" 바 표시 확인
+3. ✅ "건설 ▲" 버튼 클릭 → 메뉴 펼쳐짐
+4. ✅ "주택" 버튼 클릭
+5. ✅ 마우스 따라다니는 반투명 건물 표시
+6. ✅ 녹색/빨간색으로 건설 가능 여부 표시
+7. ✅ 클릭으로 건물 배치
+8. ✅ 메뉴가 펼쳐진 상태 유지 (빠른 재선택 가능)
+9. ✅ "▼ 접기" 버튼 클릭 → 메뉴 접힘
+10. ✅ ESC로 건설 취소
 
-**결과:** 즉시 시각적 피드백, 개발 동기부여 상승! 🎉
+**결과:** 모바일 호환 하단 바 UI 완성! 🎉
 
 ---
 
 ### 3.2. Phase 2: Resource 기반 동적 UI
 
-**목표:** BuildingData Resource로 버튼 자동 생성
+**목표:** BuildingData Resource로 버튼 자동 생성 (하단 바 유지)
 
 #### 업그레이드된 씬 구조
 
 **파일:** `scenes/ui/construction_menu.tscn`
 
 ```
-ConstructionMenu (Control)
-├── Panel
-│   ├── VBoxContainer
-│   │   ├── TitleLabel (Label: "건물 건설")
-│   │   └── ScrollContainer
-│   │       └── BuildingListContainer (VBoxContainer) ← 동적 생성
-│   └── CloseButton
+ConstructionMenu (Control, Full Rect)
+├── CollapsedBar (Panel)
+│   └── ExpandButton (Button, "건설 ▲")
+└── ExpandedPanel (Panel)
+    ├── Header (HBoxContainer)
+    │   ├── TitleLabel (Label: "건설 메뉴")
+    │   └── CollapseButton (Button, "▼ 접기")
+    └── Content (VBoxContainer)
+        └── ScrollContainer (horizontal)
+            └── BuildingListContainer (HBoxContainer) ← 동적 생성
 ```
 
 #### 동적 버튼 생성 스크립트
@@ -339,16 +392,48 @@ ConstructionMenu (Control)
 # scripts/ui/construction_menu.gd
 extends Control
 
-@onready var building_list_container: VBoxContainer = $Panel/VBoxContainer/ScrollContainer/BuildingListContainer
-@onready var close_button: Button = $Panel/CloseButton
+# 노드 참조
+@onready var collapsed_bar: Panel = $CollapsedBar
+@onready var expanded_panel: Panel = $ExpandedPanel
+@onready var expand_button: Button = $CollapsedBar/ExpandButton
+@onready var collapse_button: Button = $ExpandedPanel/Header/CollapseButton
+@onready var building_list_container: HBoxContainer = $ExpandedPanel/Content/ScrollContainer/BuildingListContainer
 
 # BuildingButton 씬 (프리팹)
 const BuildingButtonScene = preload("res://scenes/ui/building_button.tscn")
 
+# 상태
+var is_expanded: bool = false
+
 func _ready():
-    close_button.pressed.connect(_on_close_button_pressed)
-    visible = false
+    # 시그널 연결
+    expand_button.pressed.connect(_on_expand_button_pressed)
+    collapse_button.pressed.connect(_on_collapse_button_pressed)
+
+    # 초기 상태: 접힘
+    _set_collapsed()
+
     populate_buildings()
+
+# 펼치기
+func _on_expand_button_pressed():
+    _set_expanded()
+
+# 접기
+func _on_collapse_button_pressed():
+    _set_collapsed()
+
+# 상태 변경: 펼침
+func _set_expanded():
+    is_expanded = true
+    collapsed_bar.visible = false
+    expanded_panel.visible = true
+
+# 상태 변경: 접힘
+func _set_collapsed():
+    is_expanded = false
+    collapsed_bar.visible = true
+    expanded_panel.visible = false
 
 # Resource 기반 동적 버튼 생성
 func populate_buildings():
@@ -393,15 +478,7 @@ func populate_buildings():
 func _on_building_button_pressed(building_data: BuildingData):
     # ConstructionManager에 Resource 전달
     ConstructionManager.select_building(building_data)
-    hide()
-
-func _on_close_button_pressed():
-    hide()
-
-func _input(event):
-    if event.is_action_pressed("toggle_construction_menu"):
-        visible = !visible
-        get_viewport().set_input_as_handled()
+    # ⭐ 메뉴 유지 (닫지 않음) - 빠른 재선택 가능
 ```
 
 #### BuildingButton 프리팹

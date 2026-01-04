@@ -399,7 +399,7 @@ ConstructionManager.select_building(road_data, ConstructionManager.ConstructionM
 **UI에서 시그널 수신:**
 
 ```gdscript
-# scripts/ui/construction_menu.gd
+# scripts/ui/construction_menu.gd (하단 바 버전)
 func _ready():
     # 시그널 연결
     ConstructionManager.building_placed.connect(_on_building_placed)
@@ -408,14 +408,16 @@ func _ready():
 func _on_building_placed(building_data: BuildingData, grid_pos: Vector2i):
     print("[UI] 건물 배치 완료: %s at %s" % [building_data.building_name, grid_pos])
     # UI 업데이트 (예: 자원 표시 갱신)
+    # 하단 바는 펼쳐진 상태 유지 (빠른 재선택 가능)
 
 func _on_construction_cancelled():
     print("[UI] 건설 취소")
-    # UI 상태 초기화
+    # 하단 바 상태는 변경 없음 (사용자가 접기 버튼으로 제어)
 ```
 
 **UI 구현 상세:**
-- `docs/design/ui_system_design.md` - 건설 메뉴 UI 전체 설계 참고
+- `docs/design/construction_menu_ui_redesign.md` - 하단 바 UI 재설계 (모바일 호환)
+- `docs/design/ui_system_design.md` - 전체 UI 시스템 설계
 
 ---
 
@@ -458,8 +460,11 @@ TestMap (Node2D)
 ├── Managers (Node)
 │   ├── BuildingManager (Node)
 │   └── ConstructionManager (Node)  ← 건설 로직
-└── UI (CanvasLayer)  ← UI 구현은 별도 문서 참조
-    └── (ui_system_design.md 참고)
+└── UI (CanvasLayer)  ← 하단 바 UI
+    └── ConstructionMenu (Control)  ← 하단 고정 바 (모바일 호환)
+        ├── CollapsedBar (Panel)    ← 접힌 상태 (50px)
+        └── ExpandedPanel (Panel)   ← 펼쳐진 상태 (200px)
+    # 상세 구조: construction_menu_ui_redesign.md 참고
 ```
 
 ### 5.3. Autoload 등록 (옵션)
@@ -655,7 +660,8 @@ const BUILDINGS: Array[BuildingData] = [
 - `docs/prd.md`: 건설 시스템 요구사항 (2.11)
 - `docs/design/resource_based_entity_design.md`: Resource 패턴 상세
 - `docs/design/tile_system_design.md`: 그리드 시스템 연동
-- **`docs/design/ui_system_design.md`**: 건설 메뉴 UI 구현 (⭐ UI는 여기 참고)
+- **`docs/design/construction_menu_ui_redesign.md`**: 하단 바 건설 메뉴 UI 재설계 (⭐ 최신 UI 디자인)
+- **`docs/design/ui_system_design.md`**: 전체 UI 시스템 설계
 - Godot 공식 문서: [Resource](https://docs.godotengine.org/en/stable/classes/class_resource.html)
 
 ---

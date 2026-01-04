@@ -348,6 +348,218 @@
 
 ---
 
+### 2.12. 저장/로드 시스템 (Save/Load System) - 추후 구현
+
+**핵심 원칙**: FileAccess + JSON 기반 게임 상태 직렬화
+
+#### 기능 요구사항
+- [ ] **게임 저장**: 현재 게임 상태를 JSON 파일로 저장
+  - 건물 목록 (위치, 상태, 레벨 등)
+  - 유닛 목록 (위치, HP, 상태 등)
+  - 자원 현황
+  - 카메라 위치
+  - 게임 시간/진행도
+- [ ] **게임 불러오기**: JSON 파일에서 게임 상태 복원
+- [ ] **여러 슬롯 지원**: 최소 3개 이상의 저장 슬롯
+- [ ] **자동 저장**: 일정 시간마다 자동 저장 (옵션)
+- [ ] **빠른 저장/불러오기**: F5/F9 키로 빠른 저장/로드
+- [ ] **저장 파일 관리**:
+  - 저장 날짜/시간 표시
+  - 저장 파일 삭제
+  - 저장 파일 덮어쓰기 경고
+- [ ] **세이브 파일 검증**: 손상된 파일 감지 및 오류 처리
+
+#### 기술 요구사항
+
+**저장 기술 스택: FileAccess + JSON**
+- **FileAccess** (Godot 내장)
+  - user:// 경로 사용 (OS별 자동 매핑)
+  - FileAccess.open(path, FileAccess.WRITE)
+  - FileAccess.open(path, FileAccess.READ)
+- **JSON** (Godot 내장)
+  - JSON.stringify(dictionary) → String
+  - JSON.parse_string(json_text) → Dictionary
+  - 딕셔너리를 JSON 텍스트로 변환하여 저장
+  - **장점**: 가장 보편적이고 데이터 호환성이 좋음
+
+**SaveManager (Autoload 싱글톤)**
+```gdscript
+# 주요 메서드
+func save_game(slot: int) -> void
+func load_game(slot: int) -> bool
+func get_save_info(slot: int) -> Dictionary
+func delete_save(slot: int) -> void
+func get_save_path(slot: int) -> String
+```
+
+**데이터 직렬화 인터페이스**
+- 각 매니저가 Dictionary 반환 메서드 제공:
+  - BuildingManager.serialize() → Dictionary
+  - UnitManager.serialize() → Dictionary (예정)
+  - ResourceManager.serialize() → Dictionary (예정)
+- SaveManager가 모든 데이터를 모아서 JSON으로 변환
+
+**저장 경로 구조**
+```
+user://saves/
+  ├── slot_1.save (JSON 파일)
+  ├── slot_2.save
+  ├── slot_3.save
+  └── autosave.save
+```
+
+#### 완료 기준
+- [ ] F5로 게임 저장 성공 (JSON 파일 생성)
+- [ ] F9로 저장된 게임 불러오기 성공
+- [ ] 건물 위치 및 상태가 정확히 복원됨
+- [ ] 유닛 위치 및 상태가 정확히 복원됨
+- [ ] 자원 수량이 정확히 복원됨
+- [ ] 저장 슬롯 UI에서 저장/로드/삭제 동작
+- [ ] 손상된 JSON 파일 로드 시 오류 메시지 표시
+- [ ] 자동 저장 기능 동작 (10분 간격)
+
+#### 구현 순서 (권장)
+
+**Phase 1: 기본 저장/로드 (FileAccess + JSON)**
+1. SaveManager.gd 작성 (Autoload)
+2. 단일 슬롯 저장 구현
+   ```gdscript
+   var save_data = {"test": "hello"}
+   var json_string = JSON.stringify(save_data)
+   var file = FileAccess.open("user://test.save", FileAccess.WRITE)
+   file.store_string(json_string)
+   file.close()
+   ```
+3. JSON 로드 테스트
+   ```gdscript
+   var file = FileAccess.open("user://test.save", FileAccess.READ)
+   var json_string = file.get_as_text()
+   var save_data = JSON.parse_string(json_string)
+   ```
+4. 간단한 데이터 저장/로드 검증
+
+**Phase 2: 전체 상태 직렬화**
+1. BuildingManager.serialize() 구현
+   ```gdscript
+   func serialize() -> Dictionary:
+       var data = []
+       for building in buildings.values():
+           data.append({
+               "type": building.building_type,
+               "grid_pos": {"x": building.grid_position.x, "y": building.grid_position.y},
+               "health": building.health
+           })
+       return {"buildings": data}
+   ```
+2. SaveManager에서 모든 매니저 데이터 수집
+3. 전체 게임 상태 JSON 저장
+4. 복원 테스트
+
+**Phase 3: 슬롯 시스템**
+1. 여러 슬롯 지원 (slot_1.save, slot_2.save, slot_3.save)
+2. 저장 파일 메타데이터 추가
+   ```gdscript
+   {
+     "version": "1.0.0",
+     "timestamp": Time.get_unix_time_from_system(),
+     "playtime": 3600,
+     "game_state": { ... }
+   }
+   ```
+3. get_save_info() 구현 (메타데이터만 읽기)
+4. 저장 슬롯 UI 제작
+
+**Phase 4: 고급 기능**
+1. 자동 저장 (Timer 노드 + autosave.save)
+2. 빠른 저장/로드 단축키 (F5/F9)
+3. JSON 파싱 오류 처리
+4. 버전 호환성 체크
+
+#### 저장 데이터 구조 예시 (JSON)
+
+```json
+{
+  "version": "1.0.0",
+  "timestamp": 1704362400,
+  "playtime": 3600,
+  "game_state": {
+    "buildings": [
+      {
+        "type": "House",
+        "grid_pos": {"x": 5, "y": 3},
+        "level": 2,
+        "health": 100
+      }
+    ],
+    "units": [
+      {
+        "type": "Worker",
+        "grid_pos": {"x": 10, "y": 7},
+        "health": 50,
+        "state": "idle"
+      }
+    ],
+    "resources": {
+      "wood": 500,
+      "stone": 300,
+      "gold": 1000
+    },
+    "camera": {
+      "position": {"x": 512, "y": 384},
+      "zoom": 1.0
+    }
+  }
+}
+```
+
+#### FileAccess + JSON 방식의 장점
+
+**✅ 보편성**
+- 가장 널리 사용되는 데이터 포맷
+- 다른 도구에서도 쉽게 읽기/편집 가능
+- 웹 기반 도구와 호환성 좋음
+
+**✅ 가독성**
+- 텍스트 파일이라 직접 열어서 확인 가능
+- 디버깅 시 저장 파일 내용 확인 용이
+- Git으로 버전 관리 가능 (텍스트 diff)
+
+**✅ 확장성**
+- 새 필드 추가 용이
+- 클라우드 저장소 연동 쉬움 (JSON API)
+- 모딩 지원 시 커뮤니티가 쉽게 편집 가능
+
+**✅ Godot 통합**
+- Godot 내장 JSON 파서 사용
+- 별도 라이브러리 불필요
+- Dictionary ↔ JSON 변환 간단
+
+#### 주의 사항
+
+**❌ JSON으로 저장하면 안 되는 것:**
+- 씬 인스턴스 참조 (PackedScene)
+- 노드 참조 (Node)
+- 시그널 연결 상태
+- 함수/콜백
+
+**✅ JSON으로 저장해야 하는 것:**
+- 기본 타입 (int, float, String, bool)
+- Dictionary, Array
+- Vector2i → {"x": 5, "y": 3} 형태로 변환
+- Enum → int 또는 String으로 변환
+
+**보안 고려사항:**
+- user:// 경로는 OS별로 자동 매핑 (안전)
+- 민감 정보는 암호화 필요 (추후 고려)
+- JSON 파싱 오류 처리 필수
+
+#### 참고 문서
+- Godot 공식 문서: "Saving games" (FileAccess + JSON 예제)
+- Godot 공식 문서: "File I/O" (FileAccess 클래스)
+- `scripts/managers/save_manager.gd`: 저장 시스템 구현 (예정)
+
+---
+
 ## 3. 우선순위 (Priorities)
 
 ### P0 (필수 구현 - MVP)
@@ -385,6 +597,11 @@
 - [ ] 유닛 정보 패널
 - [ ] 건물 업그레이드
 - [ ] **NPC 시스템** (타이쿤 게임용)
+- [ ] **저장/로드 시스템** (FileAccess + JSON)
+  - [ ] SaveManager 구현
+  - [ ] 게임 상태 직렬화
+  - [ ] 여러 슬롯 지원
+  - [ ] 자동 저장
 
 ### P3 (고급 기능 - 선택사항)
 특정 장르에만 필요한 고급 기능
@@ -439,7 +656,7 @@
 
 ### 5.3. 범위 제약
 - **네트워크**: 멀티플레이어 미지원 (추후 고려)
-- **세이브/로드**: 현재 버전 미지원
+- **세이브/로드**: P2 우선순위로 구현 예정 (FileAccess + JSON 방식)
 - **모바일**: PC 전용 (터치 미지원)
 
 ---
