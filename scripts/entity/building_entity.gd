@@ -33,6 +33,9 @@ var is_selected: bool = false:
 		is_selected = value
 		_update_selection_indicator()
 
+## 현재 이 엔티티가 가지고 있는 데이터 (Resource 기반)
+var data: BuildingData
+
 
 # ============================================================
 # 생명주기
@@ -64,6 +67,10 @@ func _ready() -> void:
 
 	# NavigationObstacle2D 설정 업데이트
 	_update_navigation_obstacle()
+
+	# 데이터가 있으면 비주얼 업데이트 (Resource 기반 시스템)
+	if data:
+		_update_visuals()
 
 
 # ============================================================
@@ -99,3 +106,38 @@ func _update_selection_indicator() -> void:
 		return
 
 	selection_indicator.visible = is_selected
+
+
+# ============================================================
+# Resource 기반 초기화 (의존성 주입 패턴)
+# ============================================================
+
+## 외부(건설 시스템)에서 호출하는 초기화 함수
+## BuildingData를 주입받아 건물 외형을 설정
+func initialize(new_data: BuildingData) -> void:
+	data = new_data
+	_update_visuals()
+	print("[BuildingEntity] initialize() 호출됨: ", data.entity_name if data else "null")
+
+## 뷰를 데이터에 맞게 갱신하는 내부 함수
+func _update_visuals() -> void:
+	if not data:
+		push_warning("BuildingEntity: 데이터가 없습니다!")
+		return
+
+	# 텍스처 설정
+	if data.sprite_texture:
+		sprite.texture = data.sprite_texture
+		print("[BuildingEntity] 텍스처 설정 완료: ", data.entity_name)
+
+		# 스케일 적용
+		if data.sprite_scale != Vector2.ONE:
+			sprite.scale = data.sprite_scale
+			print("[BuildingEntity] 스프라이트 스케일 적용: ", data.sprite_scale)
+
+		# 오프셋 적용 (필요한 경우)
+		if data.sprite_offset != Vector2.ZERO:
+			sprite.position = data.sprite_offset
+			print("[BuildingEntity] 스프라이트 오프셋 적용: ", data.sprite_offset)
+	else:
+		push_warning("BuildingData에 텍스처가 설정되지 않았습니다: %s" % data.entity_name)

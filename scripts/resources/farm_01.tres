@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=4 format=3 uid="uid://rqnlo2s1xnf0"]
+
+[ext_resource type="PackedScene" uid="uid://va2oopgrwgd4" path="res://scenes/entitys/building_entity.tscn" id="1_pp2hn"]
+[ext_resource type="Script" uid="uid://dm10fbbqn6tsq" path="res://scripts/resources/building_data.gd" id="2_vbtmv"]
+[ext_resource type="Texture2D" uid="uid://dnjp2dqgpl8al" path="res://assets/sprites/entity/unit_circle.svg" id="3_bes1y"]
+
+[resource]
+script = ExtResource("2_vbtmv")
+cost_wood = 60
+cost_stone = 20
+cost_gold = 150
+category = 1
+entity_id = "farm_01"
+entity_name = "농장"
+description = "식량을 생산합니다."
+sprite_texture = ExtResource("3_bes1y")
+scene_to_spawn = ExtResource("1_pp2hn")
+metadata/_custom_type_script = "uid://dm10fbbqn6tsq"

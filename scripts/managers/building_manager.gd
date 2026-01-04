@@ -44,8 +44,9 @@ func initialize(parent_node: Node2D) -> void:
 
 ## 특정 그리드 위치에 건물 생성
 ## grid_pos: 그리드 좌표
+## building_data: (선택) BuildingData Resource - 제공 시 initialize() 호출
 ## 반환값: 생성된 BuildingEntity 인스턴스 (실패 시 null)
-func create_building(grid_pos: Vector2i) -> Node2D:
+func create_building(grid_pos: Vector2i, building_data: BuildingData = null) -> Node2D:
 	# 이미 건물이 존재하는 위치인지 확인
 	if grid_buildings.has(grid_pos):
 		push_warning("[BuildingManager] 이미 건물이 존재: ", grid_pos)
@@ -73,7 +74,12 @@ func create_building(grid_pos: Vector2i) -> Node2D:
 	# Dictionary에 등록
 	grid_buildings[grid_pos] = building
 
-	print("[BuildingManager] 건물 생성: Grid ", grid_pos, " → World ", world_pos)
+	# ⭐ Resource 기반 초기화 (의존성 주입 패턴)
+	if building_data:
+		building.initialize(building_data)
+		print("[BuildingManager] 건물 생성 (Resource): ", building_data.entity_name, " at Grid ", grid_pos, " → World ", world_pos)
+	else:
+		print("[BuildingManager] 건물 생성: Grid ", grid_pos, " → World ", world_pos)
 
 	return building
 

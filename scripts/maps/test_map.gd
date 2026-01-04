@@ -92,6 +92,9 @@ func _ready() -> void:
 	# 테스트 유닛 생성
 	_create_test_units()
 
+	# ⭐ Resource 기반 건물 생성 테스트
+	_test_resource_based_buildings()
+
 	print("[TestMap] 테스트 맵 초기화 완료")
 	print("[TestMap] 우클릭으로 유닛을 이동시킬 수 있습니다")
 
@@ -117,3 +120,63 @@ func _create_test_units() -> void:
 
 	print("[TestMap] 테스트 유닛 %d개 생성 완료" % test_units.size())
 	print("[TestMap] 좌클릭으로 유닛 선택, 우클릭으로 이동 명령")
+
+
+# ============================================================
+# Resource 기반 건물 테스트
+# ============================================================
+
+## Resource 기반 건물 생성 테스트
+func _test_resource_based_buildings() -> void:
+	print("\n========================================")
+	print("Resource 기반 건물 생성 테스트 시작")
+	print("========================================\n")
+
+	# BuildingDatabase에서 건물 데이터 로드
+	var house_data = BuildingDatabase.get_building_by_id("house_01")
+	var farm_data = BuildingDatabase.get_building_by_id("farm_01")
+	var shop_data = BuildingDatabase.get_building_by_id("shop_01")
+
+	# 데이터 로드 확인
+	if house_data:
+		print("[TestMap] house_01 로드 성공: ", house_data.entity_name)
+	else:
+		push_error("[TestMap] house_01 로드 실패!")
+
+	if farm_data:
+		print("[TestMap] farm_01 로드 성공: ", farm_data.entity_name)
+	else:
+		push_error("[TestMap] farm_01 로드 실패!")
+
+	if shop_data:
+		print("[TestMap] shop_01 로드 성공: ", shop_data.entity_name)
+	else:
+		push_error("[TestMap] shop_01 로드 실패!")
+
+	# 건물 생성 (왼쪽 영역에 배치)
+	var test_building_positions = [
+		{"pos": Vector2i(3, 3), "data": house_data},
+		{"pos": Vector2i(5, 3), "data": farm_data},
+		{"pos": Vector2i(7, 3), "data": shop_data},
+	]
+
+	for building_info in test_building_positions:
+		var grid_pos = building_info["pos"]
+		var data = building_info["data"]
+
+		if data:
+			var building = building_manager.create_building(grid_pos, data)
+			if building:
+				print("[TestMap] ✅ 건물 생성 성공: ", data.entity_name, " at ", grid_pos)
+			else:
+				push_error("[TestMap] ❌ 건물 생성 실패: ", data.entity_name)
+		else:
+			push_error("[TestMap] ❌ 건물 데이터가 null입니다!")
+
+	print("\n========================================")
+	print("✅ Resource 기반 건물 테스트 완료!")
+	print("화면 왼쪽에 3개의 건물이 각기 다른 이미지로 보여야 합니다:")
+	print("  - (3, 3): 주택 (빨간 아이콘)")
+	print("  - (5, 3): 농장 (원형 아이콘)")
+	print("  - (7, 3): 상점 (타일셋 이미지)")
+	print("========================================\n")

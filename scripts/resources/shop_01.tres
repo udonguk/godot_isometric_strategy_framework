@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=5 format=3 uid="uid://n5mlk4mjtwny"]
+
+[ext_resource type="PackedScene" uid="uid://va2oopgrwgd4" path="res://scenes/entitys/building_entity.tscn" id="1_eawb5"]
+[ext_resource type="Script" uid="uid://dm10fbbqn6tsq" path="res://scripts/resources/building_data.gd" id="1_hwktc"]
+[ext_resource type="Texture2D" uid="uid://dpmno36hud44x" path="res://assets/sprites/tiles/isometric-sandbox-sheet.png" id="3_cp0ce"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rpbab"]
+atlas = ExtResource("3_cp0ce")
+region = Rect2(160, -0.33296204, 32, 32)
+
+[resource]
+script = ExtResource("1_hwktc")
+cost_wood = 1
+cost_stone = 2
+entity_id = "shop_01"
+entity_name = "상점"
+description = "물건을 판매하는 건물"
+sprite_texture = SubResource("AtlasTexture_rpbab")
+scene_to_spawn = ExtResource("1_eawb5")
+metadata/_custom_type_script = "uid://dm10fbbqn6tsq"

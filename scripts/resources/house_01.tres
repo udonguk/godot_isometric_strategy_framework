@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=4 format=3 uid="uid://c0tg4fmxfmbof"]
+
+[ext_resource type="PackedScene" uid="uid://va2oopgrwgd4" path="res://scenes/entitys/building_entity.tscn" id="1_8lla8"]
+[ext_resource type="Script" uid="uid://dm10fbbqn6tsq" path="res://scripts/resources/building_data.gd" id="2_2kveb"]
+[ext_resource type="Texture2D" uid="uid://bv0c6pursj70k" path="res://icon.svg" id="3_lh1ps"]
+
+[resource]
+script = ExtResource("2_2kveb")
+cost_wood = 50
+cost_stone = 30
+entity_id = "house_01"
+entity_name = "주택"
+description = "주민이 거주하는 집입니다."
+sprite_texture = ExtResource("3_lh1ps")
+sprite_scale = Vector2(0.3, 0.3)
+scene_to_spawn = ExtResource("1_8lla8")
+metadata/_custom_type_script = "uid://dm10fbbqn6tsq"
