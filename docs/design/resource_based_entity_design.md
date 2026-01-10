@@ -1,45 +1,24 @@
-# Resource 기반 엔티티 설계 패턴 (Resource-Based Entity Design Pattern)
+# Resource 기반 엔티티 설계 패턴
 
-## 1. 개요
+## 📌 1. 개요
 
-Godot의 **Resource 시스템**을 활용하여 모든 게임 엔티티(건물, 유닛, NPC, 아이템 등)를 **데이터 주도 방식**으로 설계하는 패턴입니다.
+Godot의 **Resource 시스템**을 활용하여 모든 게임 엔티티(건물, 유닛, NPC, 아이템 등)를 **데이터 주도 방식(Data-Driven)**으로 설계하는 패턴입니다.
 
-### 1.1. 왜 Resource 패턴인가?
+### 1.1. 핵심 아이디어
 
-**전통적인 방식 (씬 하드코딩):**
+**의존성 주입(Dependency Injection) 패턴**을 사용하여 단일 씬으로 다양한 외형과 속성을 가진 엔티티를 구현합니다.
 
-```gdscript
-# ❌ 나쁜 예: 모든 데이터가 코드에 하드코딩됨
-func create_house():
-    var house = HouseScene.instantiate()
-    house.name = "주택"
-    house.cost = 100
-    house.health = 500
+- **Data (Resource)**: 엔티티가 "어떤 데이터"를 가질지 정의
+- **View (Scene)**: 데이터를 "어떻게" 표시할지 정의
+- **Controller (Manager)**: 씬을 생성하고 데이터를 주입
+
 ```
-
-**문제점:**
-- ❌ 새 건물 추가 = 코드 수정 필요
-- ❌ 기획 변경 = 프로그래머가 수정
-- ❌ 데이터 재사용 어려움
-- ❌ 저장/로드 시스템 복잡
-
-**Resource 방식 (데이터 주도):**
-
-```gdscript
-# ✅ 좋은 예: 데이터와 로직 분리
-var house_data = load("res://data/buildings/house.tres")
-
-func create_building(data: BuildingData):
-    var building = data.scene_to_build.instantiate()
-    # 데이터에서 모든 정보 가져옴
+하나의 씬 (building_entity.tscn)
+  +
+Resource 파일들 (house_01.tres, farm_01.tres...)
+  =
+무한한 건물 종류!
 ```
-
-**장점:**
-- ✅ 코드 수정 없이 새 엔티티 추가
-- ✅ 기획자가 에디터에서 직접 데이터 편집
-- ✅ 데이터 재사용 및 상속 가능
-- ✅ 저장/로드 시스템 단순화
-- ✅ 모딩 지원 용이
 
 ### 1.2. 핵심 원칙
 
@@ -55,24 +34,176 @@ Entity (Node2D)          ← 표현 레이어
 
 ---
 
-## 2. Resource 패턴 기본 구조
+## 🎯 2. 왜 이 방식을 사용하는가?
 
-### 2.1. 1단계: 기본 EntityData 클래스
+### 2.1. 문제 상황
+
+각 건물(주택, 농장, 상점)이 다른 이미지와 속성을 가져야 하는데, 어떻게 구현할까?
+
+#### ❌ 잘못된 접근 1: 각 건물마다 씬 생성
+
+```
+scenes/entity/
+  ├─ house_entity.tscn
+  ├─ farm_entity.tscn
+  └─ shop_01_entity.tscn (건물 100개면 씬 100개!)
+```
+
+**단점:**
+- 씬 파일 관리 복잡
+- 공통 로직 수정 시 모든 씬 수정 필요
+- 유지보수 지옥
+
+#### ❌ 잘못된 접근 2: 코드로 분기 처리
+
+```gdscript
+func create_building(type: String):
+    if type == "house":
+        sprite.texture = house_texture
+    elif type == "farm":
+        sprite.texture = farm_texture
+    # ... 건물 100개면 if문 100개!
+```
+
+**단점:**
+- 확장성 없음 (새 건물 추가 = 코드 수정)
+- Open/Closed 원칙 위반
+- 기획 변경 = 프로그래머가 수정
+
+#### ❌ 잘못된 접근 3: 하드코딩
+
+```gdscript
+# 모든 데이터가 코드에 하드코딩됨
+func create_house():
+    var house = HouseScene.instantiate()
+    house.name = "주택"
+    house.cost = 100
+    house.health = 500
+```
+
+**단점:**
+- 새 건물 추가 = 코드 수정 필요
+- 데이터 재사용 어려움
+- 저장/로드 시스템 복잡
+
+#### ✅ 올바른 접근: Resource 기반 의존성 주입
+
+```gdscript
+# 데이터와 로직 분리
+var house_data = BuildingDatabase.get_building_by_id("house_01")
+var building = BuildingManager.create_building(Vector2i(5, 5), house_data)
+# 끝! BuildingEntity가 알아서 처리함
+```
+
+**장점:**
+- ✅ 씬 1개만 관리
+- ✅ 새 건물 추가 = .tres 파일만 생성 (코드 수정 불필요)
+- ✅ 기획자가 에디터에서 직접 데이터 편집
+- ✅ SOLID 원칙 준수
+- ✅ 저장 시스템 호환
+- ✅ 데이터 재사용 및 상속 가능
+- ✅ 모딩 지원 용이
+
+---
+
+## 🏗️ 3. 아키텍처 설계
+
+### 3.1. 전체 구조
+
+```
+[Resource Layer - 데이터]
+  EntityData (베이스 클래스)
+    ├─ sprite_texture: Texture2D
+    ├─ sprite_scale: Vector2
+    ├─ sprite_offset: Vector2
+    ├─ icon: Texture2D
+    └─ scene_to_spawn: PackedScene
+
+  BuildingData (extends EntityData)
+    ├─ cost_wood: int
+    ├─ cost_stone: int
+    ├─ cost_gold: int
+    └─ category: Enum
+
+  UnitData (extends EntityData)
+    ├─ move_speed: float
+    ├─ max_health: int
+    └─ attack_damage: int
+
+  NPCData (extends EntityData)
+    └─ default_behavior: Enum
+
+  ItemData (extends EntityData)
+    └─ stack_size: int
+
+[View Layer - 씬]
+  BuildingEntity.tscn
+    └─ Sprite2D (빈 템플릿)
+
+  BuildingEntity.gd
+    ├─ initialize(data: BuildingData)  ← 주입 받는 함수
+    └─ _update_visuals()  ← 데이터 → 비주얼 변환
+
+[Controller Layer - 매니저]
+  BuildingManager
+    └─ create_building(grid_pos, data)
+          ↓
+       building.initialize(data)  ← 주입!
+
+[Factory Layer - 인스턴스 생성]
+  EntityFactory
+    └─ create_entity(entity_data, position)
+
+  BuildingFactory (extends EntityFactory)
+    └─ create_building(building_data, grid_pos)
+
+[Database Layer - 중앙 관리]
+  EntityDatabase
+    ├─ get_building_by_id("house_01")
+    ├─ get_unit_by_id("soldier_01")
+    └─ get_all_buildings()
+```
+
+### 3.2. 의존성 방향
+
+```
+BuildingManager (고수준)
+    ↓ 의존
+BuildingData (추상화)
+    ↓
+Texture2D (저수준 - Godot 내장)
+```
+
+**핵심**: 매니저는 Godot 내장 타입(Texture2D)을 직접 다루지 않고, BuildingData를 통해서만 접근합니다.
+
+---
+
+## 📝 4. Resource 클래스 설계
+
+### 4.1. EntityData (베이스 Resource)
 
 **파일**: `scripts/resources/entity_data.gd`
 
 ```gdscript
-# scripts/resources/entity_data.gd
 class_name EntityData extends Resource
 
-# 모든 엔티티 공통 속성
-@export var entity_id: String = ""           # 고유 ID
-@export var entity_name: String = ""         # 표시 이름
-@export var description: String = ""         # 설명
+# 기본 정보
+@export_group("Basic Info")
+@export var entity_id: String = ""
+@export var entity_name: String = ""
+@export var description: String = ""
+
+# 비주얼
+@export_group("Visuals")
+@export var sprite_texture: Texture2D        # 텍스처 (개별 이미지 or Atlas)
+@export var sprite_scale: Vector2 = Vector2.ONE    # 크기 조정
+@export var sprite_offset: Vector2 = Vector2.ZERO  # 위치 보정
 @export var icon: Texture2D                  # UI 아이콘
+
+# 씬
+@export_group("Scene")
 @export var scene_to_spawn: PackedScene      # 실제 씬
 
-# 공통 헬퍼 함수
 func get_id() -> String:
     return entity_id
 
@@ -80,21 +211,36 @@ func get_display_name() -> String:
     return entity_name
 ```
 
-### 2.2. 2단계: 특화된 Resource 상속
+**핵심 포인트:**
+- `extends Resource` - 직렬화 가능 (저장 시스템 호환)
+- `@export` - Inspector에서 편집 가능
+- `@export_group` - Inspector 정리
 
-**건물 데이터:**
+### 4.2. BuildingData (건물 전용 Resource)
+
+**파일**: `scripts/resources/building_data.gd`
 
 ```gdscript
-# scripts/resources/building_data.gd
 class_name BuildingData extends EntityData
 
 # 건물 전용 속성
+@export_group("Building Properties")
 @export var cost_wood: int = 0
 @export var cost_stone: int = 0
-@export var cost_gold: int = 0
+@export var cost_gold: int = 100
 @export var grid_size: Vector2i = Vector2i(1, 1)
 @export var max_health: int = 500
 
+# 카테고리
+enum BuildingCategory {
+    RESIDENTIAL,  # 주거
+    PRODUCTION,   # 생산
+    MILITARY,     # 군사
+    DECORATION    # 장식
+}
+@export var category: BuildingCategory = BuildingCategory.RESIDENTIAL
+
+# 헬퍼 함수
 func get_total_cost() -> Dictionary:
     return {
         "wood": cost_wood,
@@ -103,13 +249,15 @@ func get_total_cost() -> Dictionary:
     }
 ```
 
-**유닛 데이터:**
+### 4.3. UnitData (유닛 전용 Resource)
+
+**파일**: `scripts/resources/unit_data.gd`
 
 ```gdscript
-# scripts/resources/unit_data.gd
 class_name UnitData extends EntityData
 
 # 유닛 전용 속성
+@export_group("Unit Stats")
 @export var move_speed: float = 100.0
 @export var max_health: int = 100
 @export var attack_damage: int = 10
@@ -125,13 +273,15 @@ enum UnitType {
 @export var unit_type: UnitType = UnitType.WORKER
 ```
 
-**NPC 데이터:**
+### 4.4. NPCData (NPC 전용 Resource)
+
+**파일**: `scripts/resources/npc_data.gd`
 
 ```gdscript
-# scripts/resources/npc_data.gd
 class_name NPCData extends EntityData
 
 # NPC 전용 속성
+@export_group("NPC Behavior")
 @export var move_speed: float = 80.0
 @export var idle_duration: float = 3.0
 
@@ -146,13 +296,15 @@ enum BehaviorPattern {
 @export var patrol_points: Array[Vector2i] = []
 ```
 
-**아이템 데이터:**
+### 4.5. ItemData (아이템 전용 Resource)
+
+**파일**: `scripts/resources/item_data.gd`
 
 ```gdscript
-# scripts/resources/item_data.gd
 class_name ItemData extends EntityData
 
 # 아이템 전용 속성
+@export_group("Item Properties")
 @export var item_type: ItemType = ItemType.RESOURCE
 @export var stack_size: int = 99
 @export var sell_price: int = 10
@@ -164,7 +316,7 @@ enum ItemType {
 }
 ```
 
-### 2.3. 상속 구조 요약
+### 4.6. 상속 구조
 
 ```
 Resource (Godot 내장)
@@ -179,9 +331,95 @@ EntityData (공통 베이스)
 
 ---
 
-## 3. Resource 파일 생성 및 관리
+## 🎨 5. 스프라이트 주입 시스템
 
-### 3.1. Resource 파일 생성 (Godot 에디터)
+### 5.1. BuildingEntity (View)
+
+**파일**: `scripts/entity/building_entity.gd`
+
+```gdscript
+class_name BuildingEntity extends Node2D
+
+@onready var sprite: Sprite2D = $Sprite2D
+
+# 현재 이 엔티티가 가지고 있는 데이터
+var data: BuildingData
+
+func _ready() -> void:
+    # ... 기존 초기화 코드 ...
+
+    # 데이터가 있으면 비주얼 업데이트
+    if data:
+        _update_visuals()
+
+# ⭐ 외부(건설 시스템)에서 호출하는 초기화 함수
+func initialize(new_data: BuildingData) -> void:
+    data = new_data
+    _update_visuals()
+    print("[BuildingEntity] initialize() 호출됨: ", data.entity_name)
+
+# ⭐ 뷰를 데이터에 맞게 갱신하는 내부 함수
+func _update_visuals() -> void:
+    if not data:
+        push_warning("BuildingEntity: 데이터가 없습니다!")
+        return
+
+    # 텍스처 설정
+    if data.sprite_texture:
+        sprite.texture = data.sprite_texture
+
+        # 스케일 적용
+        if data.sprite_scale != Vector2.ONE:
+            sprite.scale = data.sprite_scale
+
+        # 오프셋 적용
+        if data.sprite_offset != Vector2.ZERO:
+            sprite.position = data.sprite_offset
+    else:
+        push_warning("BuildingData에 텍스처가 설정되지 않았습니다: %s" % data.entity_name)
+```
+
+**핵심 포인트:**
+- `initialize(data)` - 의존성 주입 받는 함수
+- `_update_visuals()` - 데이터를 비주얼로 변환
+- 데이터 → 뷰 단방향 흐름
+
+### 5.2. BuildingManager (Controller)
+
+**파일**: `scripts/managers/building_manager.gd`
+
+```gdscript
+func create_building(grid_pos: Vector2i, building_data: BuildingData = null) -> Node2D:
+    # ... 유효성 검사 ...
+
+    # BuildingEntity 인스턴스 생성
+    var building = BuildingEntityScene.instantiate()
+
+    # 위치 설정
+    building.grid_position = grid_pos
+    building.position = GridSystem.grid_to_world(grid_pos)
+
+    # 씬 트리에 추가
+    buildings_parent.add_child(building)
+
+    # ⭐ Resource 기반 초기화 (의존성 주입!)
+    if building_data:
+        building.initialize(building_data)
+        print("[BuildingManager] 건물 생성 (Resource): ", building_data.entity_name)
+
+    return building
+```
+
+**핵심 포인트:**
+- `building_data`는 optional parameter (기존 코드 호환)
+- 데이터가 있으면 `initialize()` 호출
+- 매니저는 데이터만 전달, 세부사항은 BuildingEntity가 처리
+
+---
+
+## 📦 6. Resource 파일 관리
+
+### 6.1. Resource 파일 생성 (Godot 에디터)
 
 **Step 1: 폴더 구조 생성**
 
@@ -212,31 +450,47 @@ data/  ← 실제 .tres 파일들
     └── gold.tres
 ```
 
-**Step 2: Resource 파일 생성**
+**Step 2: .tres 파일 생성**
 
-```
-Godot 에디터:
-1. FileSystem → data/buildings/ 우클릭
+1. FileSystem → `data/buildings/` 우클릭
 2. "Create New" → "Resource"
-3. 타입 선택: "BuildingData"
-4. 이름: house_01.tres
-5. Inspector에서 데이터 입력:
-   - entity_id: "house_01"
-   - entity_name: "주택"
-   - description: "주민이 거주하는 집"
-   - icon: [아이콘 이미지 드래그]
-   - scene_to_spawn: [씬 파일 드래그]
-   - cost_gold: 100
-   - grid_size: (1, 1)
-6. 저장 (Ctrl+S)
+3. 타입: "BuildingData" 검색 → 선택
+4. 이름: `house_01.tres`
+5. Create
+
+### 6.2. Inspector에서 데이터 입력
+
+```
+house_01.tres:
+
+[Basic Info]
+- Entity Id: "house_01"
+- Entity Name: "주택"
+- Description: "주민이 거주하는 집입니다."
+
+[Visuals]
+- Sprite Texture: [icon.svg 드래그]
+- Sprite Scale: (0.5, 0.5)  ← 절반 크기!
+- Sprite Offset: (0, 0)
+- Icon: [비워둠]
+
+[Scene]
+- Scene To Spawn: [building_entity.tscn 드래그]
+
+[Building Properties]
+- Cost Wood: 50
+- Cost Stone: 30
+- Cost Gold: 100
+- Grid Size: (1, 1)
+- Category: RESIDENTIAL
+- Max Health: 500
 ```
 
-### 3.2. Database 패턴 (중앙 관리)
+### 6.3. EntityDatabase (중앙 관리)
 
 **파일**: `scripts/config/entity_database.gd`
 
 ```gdscript
-# scripts/config/entity_database.gd
 extends Node
 class_name EntityDatabase
 
@@ -301,14 +555,13 @@ static func get_all_units() -> Array[UnitData]:
 
 ---
 
-## 4. Factory 패턴 (인스턴스 생성)
+## 🏭 7. Factory 패턴 (인스턴스 생성)
 
-### 4.1. EntityFactory 기본 클래스
+### 7.1. EntityFactory (기본 클래스)
 
 **파일**: `scripts/factories/entity_factory.gd`
 
 ```gdscript
-# scripts/factories/entity_factory.gd
 class_name EntityFactory extends Node
 
 # Resource에서 엔티티 인스턴스 생성
@@ -324,8 +577,8 @@ static func create_entity(entity_data: EntityData, position: Vector2) -> Node2D:
     entity.global_position = position
 
     # 엔티티에 데이터 전달 (옵션)
-    if entity.has_method("set_entity_data"):
-        entity.set_entity_data(entity_data)
+    if entity.has_method("initialize"):
+        entity.initialize(entity_data)
 
     return entity
 
@@ -335,12 +588,11 @@ static func create_entity_at_grid(entity_data: EntityData, grid_pos: Vector2i) -
     return create_entity(entity_data, world_pos)
 ```
 
-### 4.2. 특화된 Factory 클래스
+### 7.2. BuildingFactory (건물 전용)
 
-**BuildingFactory:**
+**파일**: `scripts/factories/building_factory.gd`
 
 ```gdscript
-# scripts/factories/building_factory.gd
 class_name BuildingFactory extends EntityFactory
 
 # 건물 전용 생성 로직
@@ -358,10 +610,11 @@ static func create_building(building_data: BuildingData, grid_pos: Vector2i) -> 
     return building
 ```
 
-**UnitFactory:**
+### 7.3. UnitFactory (유닛 전용)
+
+**파일**: `scripts/factories/unit_factory.gd`
 
 ```gdscript
-# scripts/factories/unit_factory.gd
 class_name UnitFactory extends EntityFactory
 
 # 유닛 전용 생성 로직
@@ -382,9 +635,9 @@ static func create_unit(unit_data: UnitData, grid_pos: Vector2i) -> CharacterBod
 
 ---
 
-## 5. Entity 클래스 (씬 스크립트)
+## 🎮 8. Entity 클래스 구현
 
-### 5.1. 엔티티가 데이터를 받는 방법
+### 8.1. 엔티티가 데이터를 받는 방법
 
 **패턴 1: 생성 후 데이터 전달**
 
@@ -398,7 +651,7 @@ var current_health: int
 var grid_size: Vector2i
 
 # Factory에서 호출
-func set_entity_data(data: BuildingData):
+func initialize(data: BuildingData):
     entity_data = data
 
     # 데이터로부터 초기화
@@ -406,9 +659,9 @@ func set_entity_data(data: BuildingData):
     grid_size = data.grid_size
 
     # 비주얼 업데이트
-    update_visual()
+    _update_visuals()
 
-func update_visual():
+func _update_visuals():
     # 스프라이트 설정 등
     pass
 ```
@@ -426,7 +679,7 @@ func _ready():
         current_health = entity_data.max_health
 ```
 
-### 5.2. 데이터 기반 동작
+### 8.2. 데이터 기반 동작
 
 ```gdscript
 # scripts/entity/unit_entity.gd
@@ -437,7 +690,7 @@ var entity_data: UnitData
 var current_health: int
 var move_speed: float
 
-func set_entity_data(data: UnitData):
+func initialize(data: UnitData):
     entity_data = data
     current_health = data.max_health
     move_speed = data.move_speed
@@ -454,9 +707,9 @@ func attack(target):
 
 ---
 
-## 6. 실전 활용 예시
+## 🎯 9. 실전 활용 예시
 
-### 6.1. 건물 건설 시스템
+### 9.1. 건물 건설 시스템
 
 ```gdscript
 # scripts/managers/construction_manager.gd
@@ -474,7 +727,7 @@ func place_building(grid_pos: Vector2i):
     BuildingManager.add_building(building, grid_pos)
 ```
 
-### 6.2. 유닛 생성 시스템
+### 9.2. 유닛 생성 시스템
 
 ```gdscript
 # scripts/managers/unit_spawner.gd
@@ -489,7 +742,7 @@ func spawn_unit_from_barracks(unit_id: String, spawn_pos: Vector2i):
     UnitManager.add_unit(unit)
 ```
 
-### 6.3. NPC 배치 시스템
+### 9.3. NPC 배치 시스템
 
 ```gdscript
 # scripts/managers/npc_manager.gd
@@ -504,7 +757,7 @@ func spawn_npc(npc_id: String, spawn_pos: Vector2i):
     add_child(npc)
 ```
 
-### 6.4. 저장/로드 시스템
+### 9.4. 저장/로드 시스템
 
 **저장:**
 
@@ -548,9 +801,9 @@ func load_game():
 
 ---
 
-## 7. 고급 패턴
+## 🚀 10. 고급 패턴
 
-### 7.1. Resource 상속 (데이터 재사용)
+### 10.1. Resource 상속 (데이터 재사용)
 
 **기본 주택:**
 
@@ -572,7 +825,7 @@ house_upgraded.tres:
 # 나머지는 house_basic에서 상속
 ```
 
-### 7.2. 동적 데이터 로드 (모딩 지원)
+### 10.2. 동적 데이터 로드 (모딩 지원)
 
 ```gdscript
 # 모드 폴더에서 커스텀 건물 로드
@@ -593,7 +846,7 @@ func load_mod_buildings(mod_path: String):
             file_name = dir.get_next()
 ```
 
-### 7.3. 데이터 검증 시스템
+### 10.3. 데이터 검증 시스템
 
 ```gdscript
 # scripts/resources/building_data.gd
@@ -613,9 +866,74 @@ func _validate_property(property: Dictionary):
 
 ---
 
-## 8. 비교: Resource vs 다른 방식
+## 🐛 11. 트러블슈팅
 
-### 8.1. Resource vs 하드코딩
+### 문제 1: 텍스처가 안 보임
+
+**증상:**
+```
+[BuildingEntity] initialize() 호출됨: 주택
+(텍스처 설정 로그 없음)
+```
+
+**원인**: BuildingData의 `sprite_texture`가 null
+
+**해결:**
+1. .tres 파일 열기
+2. Inspector → Visuals → Sprite Texture
+3. 이미지 파일 드래그
+
+---
+
+### 문제 2: 건물이 너무 큼/작음
+
+**해결:**
+1. .tres 파일 열기
+2. Inspector → Visuals → Sprite Scale
+3. 값 조정:
+   - (1.0, 1.0) = 원본 크기
+   - (0.5, 0.5) = 절반 크기
+   - (2.0, 2.0) = 2배 크기
+
+---
+
+### 문제 3: Resource 로드 실패
+
+**증상:**
+```
+Cannot load resource at path 'res://data/buildings/house_01.tres'
+```
+
+**원인**: 경로 오류
+
+**해결:**
+- ✅ `res://data/buildings/house_01.tres`
+- ❌ `data/buildings/house_01.tres` (res:// 빠짐)
+
+---
+
+### 문제 4: Node는 Resource에 저장 불가
+
+```gdscript
+# ❌ 불가능
+@export var sprite_node: Sprite2D  # Error!
+
+# ✅ 가능
+@export var sprite_texture: Texture2D
+@export var sprite_scale: Vector2
+```
+
+**이유**: Resource는 직렬화 가능한 데이터만 저장 (Texture2D, int, Vector2 등)
+
+**해결**: 속성을 분리해서 저장 (texture, scale, offset 등)
+
+---
+
+## 📊 12. 비교 및 베스트 프랙티스
+
+### 12.1. Resource vs 다른 방식
+
+#### Resource vs 하드코딩
 
 | 항목 | 하드코딩 | Resource |
 |------|---------|----------|
@@ -625,7 +943,7 @@ func _validate_property(property: Dictionary):
 | 저장/로드 | 복잡함 | 간단함 (ID만) |
 | 모딩 지원 | 불가능 | 가능 |
 
-### 8.2. Resource vs JSON/CSV
+#### Resource vs JSON/CSV
 
 | 항목 | JSON/CSV | Resource |
 |------|----------|----------|
@@ -637,11 +955,7 @@ func _validate_property(property: Dictionary):
 
 **결론:** 소규모 프로젝트는 Resource, 대규모 데이터는 JSON+Resource 하이브리드
 
----
-
-## 9. 베스트 프랙티스
-
-### 9.1. 파일 구조 권장사항
+### 12.2. 파일 구조 권장사항
 
 ```
 scripts/
@@ -669,7 +983,7 @@ scenes/
     └── npc_entity.tscn         # NPC 씬
 ```
 
-### 9.2. 네이밍 컨벤션
+### 12.3. 네이밍 컨벤션
 
 **Resource 클래스:**
 - `EntityData`, `BuildingData`, `UnitData` (접미사 `Data`)
@@ -680,7 +994,7 @@ scenes/
 **ID 규칙:**
 - `"house_01"`, `"unit_soldier_basic"` (타입 접두사 옵션)
 
-### 9.3. 개발 순서
+### 12.4. 개발 순서
 
 ```
 1. EntityData 베이스 클래스 정의
@@ -700,7 +1014,37 @@ scenes/
 
 ---
 
-## 10. 실전 체크리스트
+## ✅ 13. 장점 정리 (SOLID 원칙)
+
+### 13.1. Single Responsibility (단일 책임)
+- EntityData: 데이터만 담당
+- BuildingEntity: 비주얼만 담당
+- BuildingManager: 생성만 담당
+
+### 13.2. Open/Closed (개방-폐쇄)
+- 새 건물 추가 = .tres 파일만 생성 (코드 수정 불필요)
+- 확장에는 열려있고, 수정에는 닫혀있음
+
+### 13.3. Dependency Inversion (의존성 역전)
+- 매니저는 Texture2D를 직접 다루지 않음
+- BuildingData라는 추상화를 통해서만 접근
+
+### 13.4. 실용적 이점
+
+- ✅ **씬 1개만 관리** - 유지보수 쉬움
+- ✅ **에디터에서 편집** - 코드 수정 없이 밸런스 조정
+- ✅ **저장 시스템 호환** - Resource는 직렬화 가능
+- ✅ **확장성** - 건물 100개 추가해도 코드 변경 없음
+- ✅ **타입 안전** - BuildingData 타입으로 컴파일 타임 체크
+
+### 13.5. 성능
+
+- ✅ preload로 미리 로딩 (런타임 부하 없음)
+- ✅ Resource 재사용 (메모리 효율적)
+
+---
+
+## 📋 14. 실전 체크리스트
 
 ### Phase 1: Resource 시스템 구축
 - [ ] EntityData.gd 작성
@@ -732,7 +1076,45 @@ scenes/
 
 ---
 
-## 11. 참고 문서
+## 📚 15. 참고 자료
+
+### 15.1. 다른 엔진과 비교
+
+#### Unity (Prefab + ScriptableObject)
+
+```csharp
+// Unity 방식 (유사)
+[CreateAssetMenu]
+public class BuildingData : ScriptableObject {
+    public Sprite sprite;
+    public Vector2 scale;
+}
+
+public class Building : MonoBehaviour {
+    public void Initialize(BuildingData data) {
+        spriteRenderer.sprite = data.sprite;
+        transform.localScale = data.scale;
+    }
+}
+```
+
+#### Unreal (DataAsset + Blueprint)
+
+```cpp
+// Unreal 방식 (유사)
+UCLASS(BlueprintType)
+class UBuildingData : public UDataAsset {
+    UPROPERTY(EditAnywhere)
+    UTexture2D* Texture;
+
+    UPROPERTY(EditAnywhere)
+    FVector2D Scale;
+};
+```
+
+**결론**: Godot의 Resource 시스템은 Unity의 ScriptableObject, Unreal의 DataAsset과 동일한 패턴입니다.
+
+### 15.2. 관련 문서
 
 - `docs/design/building_construction_system_design.md`: 건설 시스템 구체적 구현
 - `docs/prd.md`: 전체 시스템 요구사항
@@ -742,9 +1124,16 @@ scenes/
 
 ---
 
-## 12. 결론
+## 🎯 16. 결론
 
-**Resource 패턴의 핵심:**
+**Resource 기반 엔티티 설계 패턴**은:
+
+- ✅ SOLID 원칙을 준수하는 깔끔한 아키텍처
+- ✅ 확장성과 유지보수성이 뛰어남
+- ✅ 실무에서 검증된 패턴 (Unity, Unreal도 유사)
+- ✅ Godot 철학과 완벽히 일치
+
+### 핵심 기억
 
 ```
 데이터 (Resource .tres)
@@ -754,17 +1143,13 @@ scenes/
 표현 (Entity Scene)
 ```
 
-이 패턴을 따르면:
-- ✅ 코드와 데이터가 완전히 분리됨
-- ✅ 기획자가 에디터에서 직접 작업 가능
-- ✅ 새 콘텐츠 추가가 매우 쉬움
-- ✅ 확장성과 유지보수성 향상
-- ✅ 모딩 및 DLC 지원 가능
+> **"씬은 표현, Resource는 데이터, Factory는 연결고리"**
 
-**다음 단계:**
-1. `building_construction_system_design.md`의 BuildingData 구현
-2. UnitData, NPCData로 패턴 확장
-3. 저장/로드 시스템에 Resource ID 활용
+**새 건물 추가 = .tres 파일 1개 생성 + Database에 1줄 추가**
 
-**핵심 기억:**
-> "씬은 표현, Resource는 데이터, Factory는 연결고리"
+코드 수정 없이 무한한 종류의 건물을 만들 수 있습니다! 🎉
+
+---
+
+**마지막 업데이트**: 2026-01-04
+**문서 버전**: 2.0 (통합 버전)
