@@ -30,15 +30,14 @@ Godot 프로젝트는 전통적인 빌드/테스트 명령어가 없으며, Godo
 
 ```
 isometric-strategy-framework/
-├── docs/            # 기획 및 디자인 문서 (애자일 구조)
-│   ├── design/      # [Design Docs] 시스템 설계 문서
+├── docs/            # 기획 및 디자인 문서 (5개 폴더 구조)
+│   ├── product/     # 제품 기획 (game_design, prd)
+│   ├── project/     # 프로젝트 관리 (backlog, sprints, architecture)
+│   ├── design/      # 기술 설계 (시스템별 설계 문서)
 │   │   └── tile_system_design.md  # 타일 시스템 설계 (UI/Logic 분리 원칙 포함)
-│   ├── game_design.md # [Living Doc] 게임 기획서 (계속 업데이트)
-│   ├── prd.md       # [Living Doc] 핵심 기능 명세서 (계속 업데이트)
-│   ├── backlog.md   # [Artifact] 제품 백로그 (전체 할 일)
-│   ├── code_convention.md # [Rule] 코드 컨벤션 및 아키텍처
-│   ├── sprints/     # [History] 스프린트별 목표 및 회고
-│   └── archive/     # [Archive] 폐기되거나 오래된 문서
+│   ├── implementation/ # 구현 가이드 (code_convention, phase guides)
+│   └── maintenance/ # 유지보수 (errors, troubleshooting, migration)
+│       └── archive/ # 폐기 문서 보관
 ├── scenes/          # Godot 씬 파일들 (소스코드)
 │   ├── tiles/       # 타일 시스템 (TileSet + TileMapLayer 한 쌍으로 관리)
 │   │   ├── ground_tileset.tres       # TileSet 리소스
