@@ -999,69 +999,7 @@ Theme → Panel:
 
 ---
 
-## 9. 구현 순서 (전체 로드맵)
-
-### Week 1: 최소 UI (즉시 테스트 가능)
-
-**Day 1-2: 건설 메뉴 (Phase 1)**
-- [ ] SimpleConstructionMenu.tscn 생성
-- [ ] 버튼 3개 (주택, 농장, 상점)
-- [ ] ConstructionManager 간단 버전
-- [ ] B 키로 열기/닫기
-- [ ] 테스트: 건물 배치 성공
-
-**Day 3-4: 기본 HUD**
-- [ ] HUD.tscn 생성
-- [ ] 자원 표시 (하드코딩)
-- [ ] 인구 표시 (하드코딩)
-
----
-
-### Week 2: Resource 통합
-
-**Day 5-7: Resource 시스템**
-- [ ] EntityData.gd, BuildingData.gd 작성
-- [ ] house_01.tres, farm_01.tres, shop_01.tres 생성
-- [ ] BuildingDatabase.gd 작성
-
-**Day 8-10: 건설 메뉴 (Phase 2)**
-- [ ] ConstructionMenu.tscn (동적 버전)
-- [ ] BuildingButton.tscn 프리팹
-- [ ] populate_buildings() 구현
-- [ ] 테스트: Resource 기반 동작 확인
-
----
-
-### Week 3: 고급 기능
-
-**Day 11-13: 정보 패널**
-- [ ] BuildingInfoPanel.tscn 생성
-- [ ] 건물 선택 시스템 연동
-- [ ] 업그레이드/철거 버튼
-
-**Day 14-15: 미니맵**
-- [ ] Minimap.tscn 생성
-- [ ] SubViewport 설정
-- [ ] 카메라 범위 표시
-- [ ] 클릭으로 이동
-
----
-
-### Week 4: 폴리싱
-
-**Day 16-18: 테마 적용**
-- [ ] main_theme.tres 생성
-- [ ] 모든 UI에 테마 적용
-- [ ] 색상/폰트 통일
-
-**Day 19-20: 고급 기능**
-- [ ] 툴팁 시스템
-- [ ] 건설 불가 메시지
-- [ ] 애니메이션 효과
-
----
-
-## 10. 폴더 구조 (최종)
+## 9. 폴더 구조 (최종)
 
 ```
 scenes/
@@ -1103,31 +1041,7 @@ resources/
 
 ---
 
-## 12. 체크리스트
-
-### Phase 1: 최소 UI (30분)
-- [ ] SimpleConstructionMenu.tscn 생성
-- [ ] 버튼 3개 추가
-- [ ] ConstructionManager 간단 버전
-- [ ] B 키로 열기/닫기 동작
-- [ ] 건물 배치 테스트 성공
-
-### Phase 2: Resource 통합 (2시간)
-- [ ] BuildingData.gd 작성
-- [ ] .tres 파일 3개 생성
-- [ ] ConstructionMenu 동적 버전
-- [ ] BuildingButton 프리팹
-- [ ] Resource 기반 동작 확인
-
-### Phase 3: 추가 UI (4시간)
-- [ ] HUD 생성 및 표시
-- [ ] BuildingInfoPanel 생성
-- [ ] Minimap 생성
-- [ ] 테마 적용
-
----
-
-## 13. 결론
+## 11. 결론
 
 **핵심 원칙:**
 

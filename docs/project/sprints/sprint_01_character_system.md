@@ -2,7 +2,7 @@
 
 **스프린트 기간:** TBD
 **담당:** TBD
-**관련 설계 문서:** `docs/design/character_system_design.md`
+**관련 설계 문서:** `../../design/character_system_design.md`
 
 ## 1. 스프린트 목표
 
@@ -231,7 +231,7 @@ func _input(event):
   - 복잡한 로직 설명 (방향 계산 등)
 
 #### 5.2. 스프린트 회고 작성
-- [ ] `docs/sprints/sprint_01_retrospective.md` 작성
+- [ ] `./sprint_01_retrospective.md` 작성
   - 완료된 작업
   - 발생한 문제 및 해결 방법
   - 다음 스프린트 개선 사항
@@ -300,18 +300,18 @@ func _input(event):
 - [ ] BaseEntity 추상화
 
 **참고 문서:**
-- `docs/design/character_system_design.md` - Phase 3: NPC 시스템
+- `../../design/character_system_design.md` - Phase 3: NPC 시스템
 
 ## 7. 참고 자료
 
 ### 설계 문서
-- `docs/design/character_system_design.md` - 캐릭터 시스템 전체 설계
-- `docs/design/tile_system_design.md` - UI/Logic 분리 원칙
-- `docs/design/navigation_system_design.md` - Navigation 시스템
-- `docs/design/input_system_design.md` - 입력 처리
+- `../../design/character_system_design.md` - 캐릭터 시스템 전체 설계
+- `../../design/tile_system_design.md` - UI/Logic 분리 원칙
+- `../../design/navigation_system_design.md` - Navigation 시스템
+- `../../design/input_system_design.md` - 입력 처리
 
 ### 코드 컨벤션
-- `docs/code_convention.md` - SOLID 원칙, 네이밍 규칙
+- `../../implementation/code_convention.md` - SOLID 원칙, 네이밍 규칙
 
 ### Godot 문서
 - [AnimatedSprite2D](https://docs.godotengine.org/en/stable/classes/class_animatedsprite2d.html)

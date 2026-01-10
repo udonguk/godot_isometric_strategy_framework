@@ -1096,11 +1096,11 @@ if sprite:  # ✅ null 체크
 
 ## 📚 참고 문서
 
-- `docs/design/construction_menu_ui_redesign.md` - 하단 바 UI 재설계 (⭐ 최신 UI 디자인)
-- `docs/design/building_construction_system_design.md` - 데이터 + 로직 설계
-- `docs/design/ui_system_design.md` - 전체 UI 시스템 설계
-- `docs/design/resource_based_entity_design.md` - Resource 패턴
-- `docs/prd.md` - 전체 요구사항
+- `../design/construction_menu_ui_redesign.md` - 하단 바 UI 재설계 (⭐ 최신 UI 디자인)
+- `../design/building_construction_system_design.md` - 데이터 + 로직 설계
+- `../design/ui_system_design.md` - 전체 UI 시스템 설계
+- `../design/resource_based_entity_design.md` - Resource 패턴
+- `../product/prd.md` - 전체 요구사항
 
 ---
 

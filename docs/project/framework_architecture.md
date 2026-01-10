@@ -615,11 +615,11 @@ func update_ui()        # UI
 ## 참고 문서
 
 - **CLAUDE.md**: 전체 프로젝트 가이드
-- **game_design.md**: 프레임워크 개요
-- **prd.md**: 기능 요구사항 정의
-- **code_convention.md**: 코드 컨벤션
-- **design/tile_system_design.md**: 타일 시스템 상세
-- **design/navigation_system_design.md**: Navigation 시스템 상세
+- **../product/game_design.md**: 프레임워크 개요
+- **../product/prd.md**: 기능 요구사항 정의
+- **../implementation/code_convention.md**: 코드 컨벤션
+- **../design/tile_system_design.md**: 타일 시스템 상세
+- **../design/navigation_system_design.md**: Navigation 시스템 상세
 
 ---
 

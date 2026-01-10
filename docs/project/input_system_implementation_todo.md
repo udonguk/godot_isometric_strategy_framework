@@ -1,6 +1,6 @@
 # 입력 시스템 구현 TODO
 
-> **참고 문서**: `docs/design/input_system_design.md`
+> **참고 문서**: `../design/input_system_design.md`
 > **목표**: 중앙 컨트롤러 패턴 기반 입력 시스템 구축
 
 ---
@@ -342,10 +342,10 @@
 
 ### Task 6.3: 문서 업데이트
 
-- [ ] `docs/design/input_system_design.md` 업데이트:
+- [ ] `../design/input_system_design.md` 업데이트:
   - [ ] "구현 완료" 상태로 변경
   - [ ] 실제 구현과 차이점이 있다면 기록
-- [ ] `docs/backlog.md` 업데이트:
+- [ ] `backlog.md` 업데이트:
   - [ ] 입력 시스템 구현 항목 완료 표시
 - [ ] `CHANGELOG.md` 추가 (있다면):
   - [ ] 입력 시스템 변경 사항 기록
@@ -378,7 +378,7 @@
 
 ### 문제 발생 시
 
-- [ ] `docs/design/input_system_design.md` 재확인
+- [ ] `../design/input_system_design.md` 재확인
 - [ ] Godot 공식 문서 참고:
   - [PhysicsPointQueryParameters2D](https://docs.godotengine.org/en/stable/classes/class_physicspointqueryparameters2d.html)
   - [Collision Layers and Masks](https://docs.godotengine.org/en/stable/tutorials/physics/physics_introduction.html#collision-layers-and-masks)

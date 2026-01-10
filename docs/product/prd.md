@@ -343,8 +343,8 @@
 - 모딩 지원 쉬움
 
 #### 참고 문서
-- `docs/design/building_construction_system_design.md`: 건설 시스템 상세 설계
-- `docs/design/resource_based_entity_design.md`: Resource 기반 엔티티 설계 패턴
+- `../design/building_construction_system_design.md`: 건설 시스템 상세 설계
+- `../design/resource_based_entity_design.md`: Resource 기반 엔티티 설계 패턴
 
 ---
 

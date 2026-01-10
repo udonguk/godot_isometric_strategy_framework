@@ -28,11 +28,11 @@ description: GDScript 코드 품질과 Godot 모범 사례 검토. SOLID 원칙 
 
 ## 검토 기준
 
-> 📖 **상세 규칙**: 모든 검토 기준의 상세 설명은 `docs/code_convention.md` 참조
+> 📖 **상세 규칙**: 모든 검토 기준의 상세 설명은 `docs/implementation/architecture_guidelines.md` 및 `docs/implementation/coding_style.md` 참조
 
 ### 1. SOLID 원칙 준수 ⭐ (가장 중요!)
 
-> 📖 **상세 내용**: `docs/code_convention.md` 섹션 2.5 "SOLID 원칙 준수" 참조
+> 📖 **상세 내용**: `docs/implementation/architecture_guidelines.md` 섹션 5 "SOLID 원칙 준수" 참조
 
 #### Single Responsibility (단일 책임)
 - [ ] 각 클래스가 하나의 명확한 책임만 가지는가?
@@ -66,7 +66,7 @@ description: GDScript 코드 품질과 Godot 모범 사례 검토. SOLID 원칙 
 
 ### 2. UI/Logic 분리 원칙
 
-> 📖 **상세 내용**: `docs/code_convention.md` 섹션 4 "아키텍처: 로직과 UI 분리" 참조
+> 📖 **상세 내용**: `docs/implementation/architecture_guidelines.md` 섹션 6 "아키텍처: 로직과 UI 분리" 참조
 
 **체크리스트:**
 - [ ] 로직이 그리드 좌표(`Vector2i`) 기반으로 작성되었는가?
@@ -78,7 +78,7 @@ description: GDScript 코드 품질과 Godot 모범 사례 검토. SOLID 원칙 
 
 ### 3. 씬 기반 개발 원칙
 
-> 📖 **상세 내용**: `docs/code_convention.md` 섹션 1.0 "씬 우선 개발" 참조
+> 📖 **상세 내용**: `docs/implementation/architecture_guidelines.md` 섹션 1 "씬 우선 개발" 참조
 
 **체크리스트:**
 - [ ] 새로운 기능이 씬으로 먼저 정의되었는가?
@@ -90,7 +90,7 @@ description: GDScript 코드 품질과 Godot 모범 사례 검토. SOLID 원칙 
 
 ### 4. Godot 내장 기능 활용
 
-> 📖 **상세 내용**: `docs/code_convention.md` 섹션 2.4 "Godot 내장 기능 우선 사용" 참조
+> 📖 **상세 내용**: `docs/implementation/architecture_guidelines.md` 섹션 4 "Godot 내장 기능 우선 사용" 참조
 
 **체크리스트:**
 - [ ] Godot 내장 기능을 먼저 확인했는가?

@@ -222,7 +222,7 @@
 
 ### 프레임워크 사용 방법
 1. 프로젝트 클론
-2. `docs/framework_architecture.md` 읽기
+2. `../project/framework_architecture.md` 읽기
 3. `scenes/maps/test_map.tscn` 참고하여 새 맵 제작
 4. 게임 로직 추가 (자원, 승리 조건 등)
 
@@ -235,4 +235,4 @@
 
 ---
 
-**참고**: 자세한 아키텍처 설명은 `docs/framework_architecture.md`를 참조하세요.
+**참고**: 자세한 아키텍처 설명은 `../project/framework_architecture.md`를 참조하세요.

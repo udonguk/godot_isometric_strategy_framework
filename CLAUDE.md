@@ -73,48 +73,9 @@ isometric-strategy-framework/
 
 ### 씬 우선 개발 원칙 (중요!)
 
-**핵심 원칙**: 새로운 기능 개발 시 **씬(.tscn) 생성을 우선**합니다
+**핵심 원칙**: 새로운 기능 개발 시 **씬(.tscn) 생성을 우선**합니다.
 
-#### 개발 순서
-
-1. **씬 생성** (scenes/ 폴더)
-   - 해당 기능의 노드 구조를 씬으로 만듦
-   - 예: `scenes/camera/rts_camera.tscn` (Camera2D 노드)
-
-2. **스크립트 작성** (scripts/ 폴더)
-   - 씬에 연결할 스크립트 작성
-   - 예: `scripts/camera/rts_camera.gd` (extends Camera2D)
-
-3. **씬에 스크립트 연결**
-   - Godot 에디터에서 씬 열기
-   - 루트 노드에 스크립트 attach
-
-#### ✅ 올바른 접근 (씬 기반)
-
-```
-예시: RTS 카메라 구현
-
-1. scenes/camera/rts_camera.tscn 생성
-   - Camera2D 노드 추가
-
-2. scripts/camera/rts_camera.gd 작성
-   extends Camera2D
-   # 카메라 로직...
-
-3. 씬에 스크립트 연결
-   - rts_camera.tscn 루트 노드에 rts_camera.gd attach
-
-4. 다른 씬에서 재사용
-   - test_map.tscn에서 "Instantiate Child Scene" → rts_camera.tscn
-```
-
-#### ❌ 피해야 할 접근 (스크립트만)
-
-```
-❌ 스크립트만 작성하고 씬 없이 코드로 인스턴스 생성
-   var camera = Camera2D.new()
-   add_child(camera)
-```
+> 📖 **상세 내용**: `docs/implementation/architecture_guidelines.md` 섹션 1 "씬 우선 개발" 참조
 
 #### 씬 생성이 필요한 경우
 
@@ -139,39 +100,15 @@ isometric-strategy-framework/
 
 ### UI/Logic 분리 원칙 (중요!)
 
-**핵심 원칙**: 게임 로직은 텍스처 크기, 픽셀 단위에 **절대** 의존하지 않음
+**핵심 원칙**: 게임 로직은 텍스처 크기, 픽셀 단위에 의존하지 않고 **그리드 좌표(`Vector2i`)** 기반으로 작성합니다.
 
-- **로직**: 항상 그리드 좌표(`Vector2i`) 기반으로 작성
-- **비주얼**: 텍스처 크기, 색상 등은 `scripts/config/game_config.gd`에 분리
-- **변환**: 그리드 ↔ 월드 좌표 변환은 `scripts/map/grid_system.gd`에서만 처리
-- **결과**: 텍스처 크기를 32x32에서 64x64로 변경해도 로직 수정 불필요
-
-**자세한 내용**: `docs/design/tile_system_design.md`의 "3. 핵심 설계 원칙" 참고
+> 📖 **상세 내용**: `docs/implementation/architecture_guidelines.md` 섹션 6 "아키텍처: 로직과 UI 분리" 참조
 
 ### Scene Instance Pattern (중요!)
 
-**Godot의 씬 인스턴스 시스템**: Unity의 Prefab과 유사하지만 동작 방식이 다름
+**핵심 원칙**: 씬 재사용 시 Factory(템플릿)와 Instance(Override) 패턴을 사용합니다.
 
-**핵심 개념:**
-- **Factory 씬**: 공통 설정만 정의 (빈 템플릿)
-- **Instance 씬**: Factory를 인스턴스화하고 필요한 부분만 Override
-- **단방향 전파**: Factory 수정 → 모든 인스턴스에 반영 (Override 제외)
-- **"Apply to Prefab" 없음**: 인스턴스 → Factory 반영 불가능
-
-**예시: TileMapLayer Factory**
-```
-ground_tilemaplayer.tscn (Factory - 공통 설정만)
-├─ test_map.tscn (인스턴스 - 타일 배치 A)
-├─ level_01.tscn (인스턴스 - 타일 배치 B)
-└─ level_02.tscn (인스턴스 - 타일 배치 C)
-```
-
-**장점:**
-- Navigation Layer 설정 한 곳에서 관리
-- 각 맵은 타일 배치만 다르게 (Override)
-- Factory 수정 시 모든 맵에 자동 반영
-
-**자세한 내용**: `docs/design/godot_scene_instance_pattern.md` 참고
+> 📖 **상세 내용**: `docs/implementation/architecture_guidelines.md` 섹션 1 및 `docs/design/godot_scene_instance_pattern.md` 참고
 
 ## 코드 작성 규칙 (중요!)
 
@@ -179,7 +116,7 @@ ground_tilemaplayer.tscn (Factory - 공통 설정만)
 
 ### Godot 내장 기능 우선 사용
 
-> 📖 **상세 내용**: `docs/code_convention.md` 섹션 2.4 "Godot 내장 기능 우선 사용" 참조
+> 📖 **상세 내용**: `docs/implementation/architecture_guidelines.md` 섹션 2.4 "Godot 내장 기능 우선 사용" 참조
 
 **원칙**: 기능 구현 시 **항상 Godot 내장 기능을 먼저 검토**하고 활용
 
@@ -187,7 +124,7 @@ ground_tilemaplayer.tscn (Factory - 공통 설정만)
 
 ### SOLID 원칙 준수
 
-> 📖 **상세 내용**: `docs/code_convention.md` 섹션 2.5 "SOLID 원칙 준수" 참조
+> 📖 **상세 내용**: `docs/implementation/architecture_guidelines.md` 섹션 2.5 "SOLID 원칙 준수" 참조
 
 **원칙**: 모든 코드는 **SOLID 원칙**을 준수하여 작성합니다
 
@@ -199,7 +136,7 @@ ground_tilemaplayer.tscn (Factory - 공통 설정만)
 
 ### Autoload 싱글톤 접근 규칙
 
-> 📖 **상세 내용**: `docs/code_convention.md` 섹션 2.3 "싱글톤 패턴 (Singleton Pattern / Autoload)" 참조
+> 📖 **상세 내용**: `docs/implementation/architecture_guidelines.md` 섹션 2.3 "싱글톤 패턴 (Singleton Pattern / Autoload)" 참조
 
 - Autoload 사용 시 이름 충돌(Shadowing) 주의
 - `class_name` 사용 권장 사항 준수

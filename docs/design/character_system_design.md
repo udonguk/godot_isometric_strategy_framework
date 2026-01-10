@@ -455,36 +455,7 @@ isometric-strategy-framework/
 3. 충돌 회피 확인
 4. 성능 측정
 
-## 13. 구현 우선순위
-
-**자세한 일정은 `docs/sprints/sprint_XX_character_system.md` 참조**
-
-### Phase 1: 기본 유닛 구현
-- [x] GameConfig에 UNIT_SIZE 추가
-- [x] unit_entity.tscn 씬 생성 (CharacterBody2D + AnimatedSprite2D)
-- [x] unit_entity.gd 기본 로직 (상태, 이동)
-- [x] 8방향 애니메이션 리소스 설정
-- [x] 테스트 맵에 유닛 배치 및 수동 이동 테스트
-
-### Phase 2: Navigation 통합
-- [x] NavigationAgent2D 설정
-- [x] 그리드 좌표 기반 이동 구현
-- [x] 장애물 회피 테스트
-- [x] InputManager 연동 (마우스 클릭 이동)
-
-### Phase 3: NPC 시스템 (미래)
-- [ ] npc_entity.tscn 씬 생성
-- [ ] 자율 행동 AI 구현
-- [ ] 행동 패턴 정의 (직원, 고객 등)
-- [ ] UnitManager 추가 (다중 유닛 관리)
-
-### Phase 4: 확장 기능 (미래)
-- [ ] BaseEntity 추상화
-- [ ] 상호작용 시스템 (Area2D)
-- [ ] 유닛 선택 UI
-- [ ] 다중 선택 및 그룹 이동
-
-## 14. 참고 문서
+## 13. 참고 문서
 
 - `tile_system_design.md`: 타일 시스템, UI/Logic 분리 원칙
 - `navigation_system_design.md`: Navigation Layers, NavigationAgent2D

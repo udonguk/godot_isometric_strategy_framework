@@ -156,7 +156,7 @@ func get_selected_building() -> BuildingEntity:
 - `print()`: 정상 동작 로그에 올바르게 사용됨
 
 **3단계: 문서화** ✅ 완료
-- [x] `docs/code_convention.md`에 에러 처리 가이드라인 추가 (5. 에러 처리 가이드라인 섹션)
+- [x] `../implementation/code_convention.md`에 에러 처리 가이드라인 추가 (5. 에러 처리 가이드라인 섹션)
 
 **실제 작업 시간:** 30분
 
@@ -317,15 +317,15 @@ func _ready() -> void:
 
 1. 각 TODO 항목의 체크박스를 진행하면서 체크
 2. 작업 완료 후 전체 TODO 제목의 ✅를 ✔️로 변경
-3. 모든 Phase 완료 시 이 문서를 `docs/archive/`로 이동
+3. 모든 Phase 완료 시 이 문서를 `../maintenance/archive/`로 이동
 
 ---
 
 ## 🔗 관련 문서
 
-- `docs/code_convention.md` - 코드 컨벤션 및 아키텍처
+- `../implementation/code_convention.md` - 코드 컨벤션 및 아키텍처
 - `CLAUDE.md` - 프로젝트 개발 가이드
-- `docs/design/tile_system_design.md` - UI/Logic 분리 원칙
+- `../design/tile_system_design.md` - UI/Logic 분리 원칙
 
 ---
 
