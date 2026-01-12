@@ -30,6 +30,11 @@ description: Git 변경사항 커밋 자동화. 변경 내용 분석 후 적절�
    - `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>` 자동 추가
    - 커밋 후 `git status` 재확인
 
+6. **Push 처리 (선택사항)**
+   - 사용자가 명시적으로 push를 요청한 경우에만 실행
+   - `git push` 실행 전 브랜치 확인
+   - Push 성공 여부 확인
+
 ---
 
 ## 커밋 전 체크리스트
@@ -186,6 +191,7 @@ EOF
 - **인자 없음**: 모든 변경사항 확인 후 커밋 메시지 생성
 - **`-m "메시지"`**: 사용자가 제공한 메시지 사용 (Claude는 Co-Authored-By만 추가)
 - **파일 경로**: 특정 파일만 스테이징 후 커밋
+- **`--push` 또는 `-p`**: 커밋 후 자동으로 `git push` 실행 (선택사항)
 
 ---
 
@@ -225,6 +231,103 @@ git reset HEAD <파일>     # 스테이징 해제
 
 ---
 
+## Push 가이드
+
+커밋 후 원격 저장소에 푸시하는 방법입니다.
+
+### 기본 Push
+
+```bash
+# 현재 브랜치를 origin으로 푸시
+git push
+```
+
+### Push 전 체크리스트
+
+1. ✅ **커밋이 올바른지 확인**
+   - `git log -1`로 마지막 커밋 메시지 확인
+   - 커밋 내용이 의도한 대로 되었는지 검증
+
+2. ✅ **원격 브랜치와 동기화 확인**
+   - `git status`로 "Your branch is ahead of 'origin/main' by N commits" 확인
+   - 필요시 `git pull --rebase`로 최신 변경사항 가져오기
+
+3. ✅ **main/master 브랜치 보호**
+   - main 브랜치에 직접 푸시하는 것이 프로젝트 규칙에 맞는지 확인
+   - 일부 프로젝트는 PR(Pull Request)을 통한 병합 필수
+
+### 특수 상황
+
+#### 1. Push 실패 (rejected)
+
+```bash
+# 원격에 새로운 커밋이 있을 때
+$ git push
+To https://github.com/user/repo.git
+ ! [rejected]        main -> main (fetch first)
+error: failed to push some refs to 'https://github.com/user/repo.git'
+
+# 해결 방법
+git pull --rebase  # 원격 변경사항 가져오고 내 커밋을 위에 재배치
+git push           # 다시 푸시
+```
+
+#### 2. 강제 Push (⚠️ 위험)
+
+```bash
+# ❌ 절대 사용 금지 (main/master 브랜치)
+git push --force
+
+# ✅ 개인 feature 브랜치에서만 신중히 사용
+git push --force-with-lease  # 더 안전한 강제 푸시
+```
+
+**강제 Push가 필요한 경우:**
+- 개인 feature 브랜치에서 `git rebase`나 `git commit --amend` 후
+- ⚠️ 다른 사람과 공유하는 브랜치에는 절대 사용 금지!
+
+#### 3. 새 브랜치 Push
+
+```bash
+# 새로운 브랜치를 처음 푸시할 때
+git push -u origin feature-branch
+
+# -u (--set-upstream): 로컬 브랜치와 원격 브랜치 연결
+# 이후부터는 `git push`만 입력해도 됨
+```
+
+### Push 성공 확인
+
+```bash
+# Push 후 확인
+$ git push
+To https://github.com/user/repo.git
+   5f6d64e..e112759  main -> main
+
+# 원격 브랜치와 동기화 확인
+$ git status
+On branch main
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean
+```
+
+### 주의사항
+
+1. ❌ **민감한 정보 Push 금지**
+   - API 키, 비밀번호, 토큰이 포함된 커밋을 절대 푸시하지 않음
+   - 실수로 푸시했다면 즉시 키를 무효화하고 `git-filter-branch` 또는 `BFG Repo-Cleaner` 사용
+
+2. ❌ **미완성 코드 Push 금지**
+   - 빌드가 깨지거나 테스트가 실패하는 코드 푸시 금지
+   - CI/CD가 있다면 통과 확인 후 푸시
+
+3. ✅ **작은 단위로 자주 Push**
+   - 하루 작업 종료 시 푸시 권장
+   - 긴 작업은 feature 브랜치에서 진행 후 PR로 병합
+
+---
+
 ## 체크리스트 요약
 
 커밋 전에 다음을 확인하세요:
@@ -256,6 +359,21 @@ git reset HEAD <파일>     # 스테이징 해제
 
 다음 단계:
   - git push로 원격 저장소에 푸시하세요.
+```
+
+### Push 완료 후 출력
+
+Push 완료 시 다음 정보를 출력:
+
+```
+✅ 원격 저장소에 푸시 완료!
+
+커밋 e112759가 origin/main에 성공적으로 푸시되었습니다.
+
+푸시된 커밋:
+  5f6d64e..e112759  main -> main
+
+이제 원격 저장소에서 변경사항을 확인하실 수 있습니다.
 ```
 
 ---
