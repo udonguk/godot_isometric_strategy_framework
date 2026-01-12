@@ -118,7 +118,7 @@ func has_building(grid_pos: Vector2i) -> bool:
 
 
 ## 모든 건물 가져오기
-func get_all_buildings() -> Array:
+func get_all_buildings() -> Array[Node2D]:
 	return grid_buildings.values()
 
 
@@ -139,11 +139,11 @@ func remove_building(grid_pos: Vector2i) -> void:
 
 	var building = grid_buildings[grid_pos]
 
-	# 씬 트리에서 제거
-	building.queue_free()
-
 	# Dictionary에서 제거
 	grid_buildings.erase(grid_pos)
+
+	# 씬 트리에서 제거
+	building.queue_free()
 
 	print("[BuildingManager] 건물 제거: ", grid_pos)
 

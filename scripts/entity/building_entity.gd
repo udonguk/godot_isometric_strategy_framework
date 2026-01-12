@@ -34,7 +34,7 @@ var is_selected: bool = false:
 		_update_selection_indicator()
 
 ## 현재 이 엔티티가 가지고 있는 데이터 (Resource 기반)
-var data: BuildingData
+var data: BuildingData = null
 
 
 # ============================================================
@@ -65,34 +65,9 @@ func _ready() -> void:
 			static_body.collision_layer = 0  # 클릭 감지 비활성화
 			static_body.collision_mask = 0   # 충돌 감지 비활성화
 
-	# NavigationObstacle2D 설정 업데이트
-	_update_navigation_obstacle()
-
 	# 데이터가 있으면 비주얼 업데이트 (Resource 기반 시스템)
 	if data:
-		_update_visuals()
-
-
-# ============================================================
-# Navigation 설정
-# ============================================================
-
-## NavigationObstacle2D 형상 업데이트
-func _update_navigation_obstacle() -> void:
-	if not has_node("NavigationObstacle2D"):
-		return
-
-	var nav_obstacle = $NavigationObstacle2D
-	var collision_poly = $StaticBody2D/CollisionPolygon2D
-	
-	if nav_obstacle and collision_poly:
-		# CollisionPolygon2D의 점들을 가져옴 (Local 좌표)
-		var poly_points = collision_poly.polygon
-		
-		# NavigationObstacle2D에 vertices 설정
-		# 주의: 건물의 모양대로 정확히 깎아내기 위해 사용
-		nav_obstacle.vertices = poly_points
-		print("[Building] Navigation Obstacle vertices 설정 완료: ", poly_points.size(), "개 점")
+		_update_visuals(data)
 
 
 # ============================================================
@@ -113,31 +88,35 @@ func _update_selection_indicator() -> void:
 # ============================================================
 
 ## 외부(건설 시스템)에서 호출하는 초기화 함수
-## BuildingData를 주입받아 건물 외형을 설정
+  ## BuildingData를 주입받아 건물 외형을 설정
+  ##
+  ## @param new_data: BuildingData Resource (텍스처, 스케일, 오프셋 포함)
+  ## @example: building.initialize(BuildingDatabase.get_building("house"))
 func initialize(new_data: BuildingData) -> void:
 	data = new_data
-	_update_visuals()
+	_update_visuals(data)  # 명시적으로 데이터 전달
 	print("[BuildingEntity] initialize() 호출됨: ", data.entity_name if data else "null")
 
 ## 뷰를 데이터에 맞게 갱신하는 내부 함수
-func _update_visuals() -> void:
-	if not data:
+## @param building_data: 비주얼 업데이트에 사용할 BuildingData (명시적 의존성)
+func _update_visuals(building_data: BuildingData) -> void:
+	if not building_data:
 		push_warning("BuildingEntity: 데이터가 없습니다!")
 		return
 
 	# 텍스처 설정
-	if data.sprite_texture:
-		sprite.texture = data.sprite_texture
-		print("[BuildingEntity] 텍스처 설정 완료: ", data.entity_name)
+	if building_data.sprite_texture:
+		sprite.texture = building_data.sprite_texture
+		print("[BuildingEntity] 텍스처 설정 완료: ", building_data.entity_name)
 
 		# 스케일 적용
-		if data.sprite_scale != Vector2.ONE:
-			sprite.scale = data.sprite_scale
-			print("[BuildingEntity] 스프라이트 스케일 적용: ", data.sprite_scale)
+		if building_data.sprite_scale != Vector2.ONE:
+			sprite.scale = building_data.sprite_scale
+			print("[BuildingEntity] 스프라이트 스케일 적용: ", building_data.sprite_scale)
 
 		# 오프셋 적용 (필요한 경우)
-		if data.sprite_offset != Vector2.ZERO:
-			sprite.position = data.sprite_offset
-			print("[BuildingEntity] 스프라이트 오프셋 적용: ", data.sprite_offset)
+		if building_data.sprite_offset != Vector2.ZERO:
+			sprite.position = building_data.sprite_offset
+			print("[BuildingEntity] 스프라이트 오프셋 적용: ", building_data.sprite_offset)
 	else:
-		push_warning("BuildingData에 텍스처가 설정되지 않았습니다: %s" % data.entity_name)
+		push_warning("BuildingData에 텍스처가 설정되지 않았습니다: %s" % building_data.entity_name)
