@@ -617,6 +617,293 @@ func initialize(new_data: BuildingData) -> void:
 
 ---
 
+#### 실제 프로젝트 적용 사례 2: 추가 리팩토링 사례
+
+이 섹션에서는 프로젝트에서 실제로 발견되고 개선된 Hidden Dependency 패턴들을 소개합니다.
+
+---
+
+##### 사례 1: TestMap.gd - Temporal Coupling 제거
+
+**파일**: `scripts/maps/test_map.gd`
+
+**문제**: 초기화 순서가 암묵적으로 정해져 있어, 순서를 변경하면 시스템이 망가짐
+
+**리팩토링 전:**
+```gdscript
+func _ready() -> void:
+    # GridSystem 초기화 (최우선!)
+    GridSystem.initialize(ground_layer)
+
+    # NavigationRegion2D가 NavigationServer2D에 등록될 때까지 대기
+    # (보통 2-3 physics_frame 필요)
+    await get_tree().physics_frame  # ❌ 왜 필요한지 불명확
+    await get_tree().physics_frame
+    await get_tree().physics_frame
+
+    # GridSystem에 Navigation Map 캐싱
+    GridSystem.cache_navigation_map()  # ❌ 사전 조건 숨김
+
+    # BuildingManager 생성 및 초기화
+    building_manager = BuildingManager.new()
+    add_child(building_manager)
+    building_manager.initialize(entities_container)
+
+    _create_test_units()
+    _test_resource_based_buildings()
+```
+
+**문제점:**
+- ❌ `await get_tree().physics_frame` 호출의 목적이 불명확
+- ❌ `cache_navigation_map()` 호출 전에 `initialize()`가 필요한지 시그니처만 봐서는 알 수 없음
+- ❌ 초기화 순서를 변경하면 Navigation 시스템 오류 발생
+- ❌ 50줄 이상의 긴 `_ready()` 메서드 (SRP 위반)
+
+**리팩토링 후:**
+```gdscript
+func _ready() -> void:
+    # ... 기본 설정
+
+    if not _validate_node_references():
+        return
+
+    # 게임 시스템 초기화 (순서 중요!)
+    await _initialize_systems()  # ✅ 초기화 로직 캡슐화
+
+    _create_test_units()
+    _test_resource_based_buildings()
+
+
+## 게임 시스템들을 올바른 순서로 초기화합니다.
+##
+## 초기화 순서가 중요한 이유:
+## 1. GridSystem.initialize() - TileMapLayer를 GridSystem에 등록해야 좌표 변환 가능
+## 2. await _wait_for_navigation_registration() - NavigationRegion2D가 NavigationServer2D에 등록 대기
+## 3. GridSystem.cache_navigation_map() - Navigation Map ID를 캐싱 (1, 2 완료 후에만 가능)
+## 4. BuildingManager.initialize() - 건물 생성 시 GridSystem 사용 (1, 3 완료 후에만 가능)
+##
+## ⚠️ 주의: 이 순서를 변경하면 Navigation 시스템이 정상 작동하지 않습니다!
+func _initialize_systems() -> void:
+    GridSystem.initialize(ground_layer)
+    await _wait_for_navigation_registration()
+    GridSystem.cache_navigation_map()
+
+    building_manager = BuildingManager.new()
+    add_child(building_manager)
+    building_manager.initialize(entities_container)
+
+
+## NavigationRegion2D가 NavigationServer2D에 완전히 등록될 때까지 대기합니다.
+##
+## Godot 4.x에서는 NavigationRegion2D 노드가 씬 트리에 추가된 후
+## 최소 3 physics frame이 지나야 NavigationServer2D에 완전히 등록됩니다.
+##
+## 이 대기 시간이 없으면:
+## - NavigationServer2D.map_get_path() 호출 시 빈 경로 반환
+## - GridSystem.cache_navigation_map()에서 유효하지 않은 Map ID 획득
+## - 유닛의 NavigationAgent2D가 경로를 찾지 못함
+func _wait_for_navigation_registration() -> void:
+    await get_tree().physics_frame
+    await get_tree().physics_frame
+    await get_tree().physics_frame
+```
+
+**개선 효과:**
+- ✅ **초기화 순서 명시화**: 주석으로 각 단계의 이유 설명
+- ✅ **await 목적 명확화**: `_wait_for_navigation_registration()` 메서드명과 주석
+- ✅ **유지보수성 향상**: 다른 개발자가 순서 변경 시 위험성을 즉시 인식
+- ✅ **SRP 준수**: `_ready()`가 20줄로 단축, 각 헬퍼 메서드는 단일 책임
+
+---
+
+##### 사례 2: RtsCamera2D.gd - 멤버 변수 Hidden Dependency 제거
+
+**파일**: `scripts/camera/rts_camera_2d.gd`
+
+**문제**: `velocity` 멤버 변수를 암묵적으로 수정하는 메서드들
+
+**리팩토링 전:**
+```gdscript
+# 현재 이동 방향 벡터
+var velocity: Vector2 = Vector2.ZERO  # ❌ 멤버 변수
+
+func _process(delta: float) -> void:
+    velocity = Vector2.ZERO
+
+    # WASD 키보드 입력 처리
+    _handle_keyboard_input()  # ❌ velocity를 암묵적으로 수정
+
+    # 카메라 이동 적용
+    if velocity.length() > 0:
+        velocity = velocity.normalized() * speed
+        position += velocity * delta
+
+
+## WASD 키보드 입력 처리
+func _handle_keyboard_input() -> void:  # ❌ 반환값 없음
+    if Input.is_action_pressed("ui_up"):
+        velocity.y -= 1  # ❌ 멤버 변수 직접 수정
+    if Input.is_action_pressed("ui_down"):
+        velocity.y += 1
+    # ...
+```
+
+**문제점:**
+- ❌ `_handle_keyboard_input()` 시그니처만 봐서는 `velocity`를 수정하는지 알 수 없음
+- ❌ Temporal Coupling: `velocity = Vector2.ZERO` → `_handle_keyboard_input()` 순서 의존
+- ❌ 테스트 어려움: 다양한 입력 조합을 테스트하려면 멤버 변수 상태 설정 필요
+- ❌ Side Effect: 메서드가 외부 상태를 변경함
+
+**리팩토링 후:**
+```gdscript
+# velocity 멤버 변수 제거! ✅
+
+func _process(delta: float) -> void:
+    # 입력 방향 수집 (명시적 반환값 사용)
+    var keyboard_direction = _get_keyboard_input_direction()  # ✅ 반환값
+    var mouse_edge_direction = _get_mouse_edge_scroll_direction()
+
+    # 모든 입력 방향 합산
+    var movement_direction = keyboard_direction + mouse_edge_direction
+
+    # 카메라 이동 적용
+    if movement_direction.length() > 0:
+        var velocity = movement_direction.normalized() * speed  # ✅ 지역 변수
+        position += velocity * delta
+
+
+## 키보드 입력(WASD, 방향키)을 기반으로 이동 방향을 계산합니다.
+##
+## @return 정규화되지 않은 입력 방향 벡터 (-1~1 범위, 대각선은 길이 sqrt(2))
+##
+## ✅ Hidden Dependency 제거: velocity 멤버 변수 대신 반환값 사용
+## ✅ 테스트 용이: 다양한 입력 조합을 독립적으로 테스트 가능
+## ✅ 순수 함수: 외부 상태를 변경하지 않음 (side effect 없음)
+func _get_keyboard_input_direction() -> Vector2:  # ✅ 명시적 반환
+    var direction = Vector2.ZERO
+
+    if Input.is_action_pressed("ui_up"):
+        direction.y -= 1  # ✅ 지역 변수 수정
+    if Input.is_action_pressed("ui_down"):
+        direction.y += 1
+    # ...
+
+    return direction  # ✅ 명시적 반환
+```
+
+**개선 효과:**
+- ✅ **명시성**: 메서드 시그니처가 반환값을 명확히 표현
+- ✅ **순수 함수**: Side Effect 제거 (외부 상태 변경 없음)
+- ✅ **테스트 가능**: 입력 조합을 독립적으로 테스트 가능
+- ✅ **재사용성**: 다른 곳에서도 입력 방향 계산 메서드 사용 가능
+- ✅ **Temporal Coupling 제거**: 호출 순서에 의존하지 않음
+
+---
+
+##### 사례 3: ConstructionMenu.gd - UI 상태 관리 개선
+
+**파일**: `scripts/ui/construction_menu.gd`
+
+**문제**: 상태 변경 메서드가 중복되고, Signal이 없어 확장성 부족
+
+**리팩토링 전:**
+```gdscript
+var is_expanded: bool = false
+
+func _on_expand_button_pressed():
+    _set_expanded()  # ❌ 하드코딩된 상태
+
+func _on_collapse_button_pressed():
+    _set_collapsed()  # ❌ 하드코딩된 상태
+
+# 상태 변경: 펼침
+func _set_expanded():  # ❌ 중복 코드
+    is_expanded = true
+    collapsed_bar.visible = false
+    expanded_panel.visible = true
+
+# 상태 변경: 접힘
+func _set_collapsed():  # ❌ 중복 코드
+    is_expanded = false
+    collapsed_bar.visible = true
+    expanded_panel.visible = false
+```
+
+**문제점:**
+- ❌ 2개 메서드(`_set_expanded`, `_set_collapsed`)가 유사한 로직 중복
+- ❌ Signal 없음: 다른 시스템이 메뉴 상태 변경을 알 수 없음
+- ❌ UI 업데이트 로직이 산재: 향후 애니메이션 추가 시 여러 곳 수정 필요
+- ❌ 파라미터 없음: 외부에서 상태를 직접 제어하기 어려움
+
+**리팩토링 후:**
+```gdscript
+## 메뉴의 확장 상태가 변경될 때 발생
+signal expansion_state_changed(expanded: bool)  # ✅ Signal 추가
+
+var is_expanded: bool = false
+
+
+## 메뉴의 확장 상태를 설정합니다.
+##
+## @param expanded: true면 메뉴를 펼치고, false면 접습니다.
+##
+## ✅ Hidden Dependency 제거: 상태를 파라미터로 명시적으로 전달
+## ✅ 단일 진입점: _set_expanded()/_set_collapsed() 대신 하나의 메서드로 통합
+## ✅ Signal 발생: 상태 변경 시 다른 시스템에 알림 가능
+func set_expansion_state(expanded: bool) -> void:  # ✅ 파라미터로 명시
+    # 동일한 상태로 변경 시 무시 (불필요한 Signal 방지)
+    if is_expanded == expanded:
+        return
+
+    is_expanded = expanded
+    _update_ui_visibility(expanded)  # ✅ UI 업데이트 분리
+    expansion_state_changed.emit(is_expanded)  # ✅ Signal 발생
+
+
+## 확장 상태에 맞게 UI 요소들의 가시성을 업데이트합니다.
+##
+## @param expanded: true면 expanded_panel을 보이고, false면 collapsed_bar를 보입니다.
+##
+## 💡 설계 의도: UI 업데이트 로직을 별도 메서드로 분리하여
+##    향후 애니메이션 추가나 추가 UI 요소 처리 시 확장 용이
+func _update_ui_visibility(expanded: bool) -> void:  # ✅ 헬퍼 메서드
+    collapsed_bar.visible = not expanded
+    expanded_panel.visible = expanded
+
+
+# 버튼 핸들러
+func _on_expand_button_pressed() -> void:
+    set_expansion_state(true)  # ✅ 명시적 호출
+
+func _on_collapse_button_pressed() -> void:
+    set_expansion_state(false)  # ✅ 명시적 호출
+```
+
+**개선 효과:**
+- ✅ **중복 제거**: 2개 메서드 → 1개 통합 메서드 (`set_expansion_state`)
+- ✅ **Observer 패턴**: `expansion_state_changed` Signal로 다른 시스템 통보
+- ✅ **확장 가능**: `_update_ui_visibility()`로 UI 로직 집중화 (애니메이션 추가 용이)
+- ✅ **명시성**: 파라미터로 의도를 명확히 표현
+- ✅ **SRP 준수**: UI 업데이트 로직이 별도 메서드로 분리
+
+---
+
+##### 리팩토링 사례 요약
+
+| 파일 | 문제 유형 | 해결 방법 | 핵심 개선 |
+|------|----------|----------|----------|
+| **test_map.gd** | Temporal Coupling (호출 순서 의존) | 초기화 헬퍼 메서드 + 문서화 주석 | 초기화 순서 명시화, 유지보수성 향상 |
+| **rts_camera_2d.gd** | velocity 멤버 변수 Hidden Dependency | 순수 함수로 변환 (반환값 사용) | Side Effect 제거, 테스트 가능성 향상 |
+| **construction_menu.gd** | 중복 메서드 + Signal 부재 | 단일 메서드 통합 + Signal 추가 | 중복 제거, Observer 패턴 적용 |
+
+**공통 교훈:**
+1. ✅ **메서드 시그니처는 계약이다**: 필요한 것은 파라미터로 명시
+2. ✅ **순수 함수를 선호하라**: Side Effect 제거 → 테스트 용이
+3. ✅ **초기화 순서는 문서화하라**: 주석으로 "왜" 설명
+4. ✅ **Signal로 결합도를 낮춰라**: 직접 호출보다 이벤트 기반
+
+---
+
 #### 관련 SOLID 원칙
 
 이 패턴은 다음 SOLID 원칙과 연결됩니다:

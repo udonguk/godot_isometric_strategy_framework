@@ -60,43 +60,78 @@ func _ready() -> void:
 	print("[TestMap] 테스트 맵 초기화")
 
 	# 노드 참조 확인
-	if not ground_layer:
-		push_error("[TestMap] GroundTileMapLayer를 찾을 수 없습니다!")
+	if not _validate_node_references():
 		return
 
-	if not world_container:
-		push_error("[TestMap] World 컨테이너를 찾을 수 없습니다!")
-		return
+	# 게임 시스템 초기화 (순서 중요!)
+	await _initialize_systems()
 
-	if not entities_container:
-		push_error("[TestMap] Entities 컨테이너를 찾을 수 없습니다!")
-		return
-
-	# GridSystem 초기화 (최우선!)
-	GridSystem.initialize(ground_layer)
-
-	# NavigationRegion2D가 NavigationServer2D에 등록될 때까지 대기
-	# (보통 2-3 physics_frame 필요)
-	await get_tree().physics_frame
-	await get_tree().physics_frame
-	await get_tree().physics_frame
-
-	# GridSystem에 Navigation Map 캐싱
-	GridSystem.cache_navigation_map()
-
-	# BuildingManager 생성 및 초기화
-	building_manager = BuildingManager.new()
-	add_child(building_manager)
-	building_manager.initialize(entities_container)
-
-	# 테스트 유닛 생성
+	# 테스트 엔티티 생성
 	_create_test_units()
-
-	# ⭐ Resource 기반 건물 생성 테스트
 	_test_resource_based_buildings()
 
 	print("[TestMap] 테스트 맵 초기화 완료")
 	print("[TestMap] 우클릭으로 유닛을 이동시킬 수 있습니다")
+
+
+## 필수 노드 참조를 검증합니다.
+## @return 모든 노드가 유효하면 true, 하나라도 null이면 false
+func _validate_node_references() -> bool:
+	if not ground_layer:
+		push_error("[TestMap] GroundTileMapLayer를 찾을 수 없습니다!")
+		return false
+
+	if not world_container:
+		push_error("[TestMap] World 컨테이너를 찾을 수 없습니다!")
+		return false
+
+	if not entities_container:
+		push_error("[TestMap] Entities 컨테이너를 찾을 수 없습니다!")
+		return false
+
+	return true
+
+
+## 게임 시스템들을 올바른 순서로 초기화합니다.
+##
+## 초기화 순서가 중요한 이유:
+## 1. GridSystem.initialize() - TileMapLayer를 GridSystem에 등록해야 좌표 변환 가능
+## 2. await _wait_for_navigation_registration() - NavigationRegion2D가 NavigationServer2D에 등록 대기
+## 3. GridSystem.cache_navigation_map() - Navigation Map ID를 캐싱 (1, 2 완료 후에만 가능)
+## 4. BuildingManager.initialize() - 건물 생성 시 GridSystem 사용 (1, 3 완료 후에만 가능)
+##
+## ⚠️ 주의: 이 순서를 변경하면 Navigation 시스템이 정상 작동하지 않습니다!
+func _initialize_systems() -> void:
+	# 1단계: GridSystem에 TileMapLayer 등록
+	GridSystem.initialize(ground_layer)
+
+	# 2단계: NavigationServer2D 등록 완료 대기
+	await _wait_for_navigation_registration()
+
+	# 3단계: Navigation Map 캐싱 (경로 찾기에 필요)
+	GridSystem.cache_navigation_map()
+
+	# 4단계: BuildingManager 초기화 (GridSystem 의존)
+	building_manager = BuildingManager.new()
+	add_child(building_manager)
+	building_manager.initialize(entities_container)
+
+
+## NavigationRegion2D가 NavigationServer2D에 완전히 등록될 때까지 대기합니다.
+##
+## Godot 4.x에서는 NavigationRegion2D 노드가 씬 트리에 추가된 후
+## 최소 3 physics frame이 지나야 NavigationServer2D에 완전히 등록됩니다.
+##
+## 이 대기 시간이 없으면:
+## - NavigationServer2D.map_get_path() 호출 시 빈 경로 반환
+## - GridSystem.cache_navigation_map()에서 유효하지 않은 Map ID 획득
+## - 유닛의 NavigationAgent2D가 경로를 찾지 못함
+##
+## @see https://docs.godotengine.org/en/stable/classes/class_navigationserver2d.html
+func _wait_for_navigation_registration() -> void:
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	await get_tree().physics_frame
 
 
 # ============================================================
