@@ -85,6 +85,295 @@ Godot 개발 효율성과 유지보수를 위해 다음 패턴 사용을 권장�
    - 예: Autoload 이름이 `GridSystem`이라면, 스크립트 내 `class_name`은 `GridSystemNode`로 지정
    - 이렇게 하면 Godot 파서가 **싱글톤 인스턴스**와 **스크립트 타입**을 명확히 구분할 수 있습니다.
 
+---
+
+#### 3.3.3. Autoload와 테스트 가능성 (Testing with Autoloads)
+
+**핵심 질문**: Autoload는 편리하지만 테스트가 어렵습니다. 어떻게 균형을 잡을까요?
+
+Godot의 Autoload는 **단순함과 강력함**을 제공하지만, **전역 상태(Global State)**로 인해 단위 테스트를 어렵게 만듭니다. 이 섹션은 **실용적 균형**을 찾는 방법을 제시합니다.
+
+---
+
+##### 핵심 원칙: 모든 것을 리팩토링하지 마라!
+
+**중요**: 클래스의 성격에 따라 전략을 선택합니다. 모든 Autoload를 의존성 주입으로 바꿀 필요는 없습니다.
+
+---
+
+##### 전략 1: Autoload 유지 (유틸리티 클래스)
+
+**적용 대상:**
+- ✅ 상태가 없는(Stateless) 클래스
+- ✅ 순수 함수(Pure Function) 성격의 유틸리티
+- ✅ 전역 설정(Configuration)
+
+**예시:**
+```gdscript
+# grid_system.gd (Autoload로 유지)
+class_name GridSystemNode extends Node
+
+# 순수 함수: 입력만으로 출력 결정, 상태 변경 없음
+func grid_to_world(grid_pos: Vector2i) -> Vector2:
+    return ground_layer.map_to_local(grid_pos)
+
+# 정적 변환 함수
+static func grid_to_string(grid_pos: Vector2i) -> String:
+    return "(%d, %d)" % [grid_pos.x, grid_pos.y]
+```
+
+**테스트 방법:**
+- **통합 테스트 사용**: 실제 TileMapLayer를 포함한 테스트 씬 구성
+- 단위 테스트보다 통합 테스트가 더 적합
+
+**적용 사례:**
+- `GridSystem` - 좌표 변환 함수
+- `GameConfig` - 전역 설정 값
+
+**장점:**
+- ✅ Godot 철학 유지 (Autoload의 단순함)
+- ✅ 코드 간결성
+- ✅ 리팩토링 불필요
+
+**단점:**
+- ❌ 단위 테스트 어려움 → 통합 테스트로 대체
+
+---
+
+##### 전략 2: 하이브리드 접근 (선택적 의존성 주입) - **권장**
+
+**적용 대상:**
+- ✅ 복잡한 비즈니스 로직을 가진 클래스
+- ✅ 상태를 관리하는 매니저 클래스
+- ✅ 단위 테스트가 중요한 클래스
+
+**예시:**
+```gdscript
+# building_manager.gd (하이브리드 방식)
+class_name BuildingManager extends Node
+
+# GridSystem 참조를 멤버 변수로 저장
+var grid_system_ref: GridSystemNode = null
+
+## BuildingManager 초기화
+##
+## @param parent_node: 건물 엔티티가 추가될 부모 노드
+## @param grid_system: (선택) GridSystem 인스턴스. 생략 시 Autoload 사용
+##
+## 💡 설계 의도 (하이브리드 접근):
+## - 실제 게임: grid_system 생략 → Autoload 사용 (편의성 유지)
+## - 테스트: Mock GridSystem 주입 → 단위 테스트 가능 (테스트 용이성)
+func initialize(parent_node: Node2D, grid_system: GridSystemNode = null) -> void:
+    buildings_parent = parent_node
+
+    # 의존성 주입 (Dependency Injection)
+    # grid_system이 제공되면 사용, 없으면 Autoload 사용
+    grid_system_ref = grid_system if grid_system else GridSystem
+
+## 건물 건설 가능 여부 검증
+func can_build_at(building_data: BuildingData, grid_pos: Vector2i) -> Dictionary:
+    # ✅ Autoload 직접 접근 대신, 주입된 인스턴스 사용
+    if not grid_system_ref.is_valid_position(grid_pos, building_data.grid_size):
+        return {"success": false, "reason": "맵 범위를 벗어났습니다"}
+    # ...
+```
+
+**실제 게임 사용 (main.gd):**
+```gdscript
+func _ready():
+    # grid_system 생략 → Autoload 사용
+    BuildingManager.initialize(entities_parent)
+    # 또는 명시적으로 Autoload 전달
+    BuildingManager.initialize(entities_parent, GridSystem)
+```
+
+**테스트 사용 (test_building_manager.gd):**
+```gdscript
+func before_each():
+    # Mock GridSystem 생성
+    var mock_grid_system = GridSystemNode.new()
+    mock_grid_system.initialize(mock_ground_layer)
+
+    # Mock 주입! (Autoload 대신 Mock 사용)
+    building_manager.initialize(entities_parent, mock_grid_system)
+```
+
+**장점:**
+- ✅ **실제 게임**: Autoload 편의성 유지 (파라미터 생략 가능)
+- ✅ **테스트**: Mock 주입으로 독립적인 단위 테스트 가능
+- ✅ **최소 리팩토링**: 기존 코드를 크게 변경하지 않음
+- ✅ **유연성**: 런타임에 다른 인스턴스로 교체 가능
+
+**단점:**
+- 🟡 초기화 메서드에 선택적 파라미터 추가 필요
+
+**적용 사례:**
+- `BuildingManager` - 건물 생성/관리 로직
+- `EnemyManager` - 적 AI 로직
+- `PathfindingManager` - 경로 찾기 로직
+
+---
+
+##### 전략 3: 완전 의존성 주입 (Autoload 제거) - 선택적
+
+**적용 대상:**
+- 대규모 프로젝트
+- 팀 개발 환경
+- 엄격한 단위 테스트 요구사항
+
+**예시:**
+```gdscript
+# building_manager.gd (완전 의존성 주입)
+var grid_system_ref: GridSystemNode  # 항상 주입 필수
+
+## BuildingManager 초기화
+##
+## @param parent_node: 건물 엔티티가 추가될 부모 노드
+## @param grid_system: GridSystem 인스턴스 (필수!)
+func initialize(parent_node: Node2D, grid_system: GridSystemNode) -> void:
+    buildings_parent = parent_node
+    grid_system_ref = grid_system  # 항상 외부에서 주입
+```
+
+**실제 게임 사용 (main.gd):**
+```gdscript
+func _ready():
+    # ⚠️ 항상 명시적으로 전달 필요
+    BuildingManager.initialize(entities_parent, GridSystem)
+```
+
+**장점:**
+- ✅ 완벽한 테스트 가능성
+- ✅ SOLID 원칙 완벽 준수
+- ✅ 의존성이 명시적으로 드러남
+
+**단점:**
+- ❌ 보일러플레이트 코드 증가
+- ❌ 초기화 복잡도 증가
+- ❌ Godot의 단순함 포기
+
+---
+
+##### 전략 비교표
+
+| 전략 | 적용 대상 | 실제 게임 편의성 | 테스트 가능성 | 리팩토링 비용 | 권장도 |
+|------|----------|---------------|-------------|------------|-------|
+| **전략 1: Autoload 유지** | 유틸리티 클래스 | ✅ 매우 높음 | 🟡 통합 테스트 | ✅ 0% | 🟢 권장 |
+| **전략 2: 하이브리드** | 매니저 클래스 | ✅ 높음 | ✅ 단위 테스트 가능 | 🟡 10-20% | 🟢 **권장** |
+| **전략 3: 완전 주입** | 대규모 프로젝트 | 🟡 보통 | ✅ 완벽 | ❌ 50%+ | 🔴 선택적 |
+
+---
+
+##### 의사결정 플로우차트
+
+```
+이 클래스가 Autoload를 사용하는가?
+    ↓ Yes
+상태가 없고 순수 함수인가? (예: GridSystem 좌표 변환)
+    ↓ Yes → [전략 1] Autoload 유지 + 통합 테스트
+    ↓ No
+복잡한 비즈니스 로직이나 상태 관리가 있는가? (예: BuildingManager)
+    ↓ Yes → [전략 2] 하이브리드 (선택적 의존성 주입)
+    ↓ No
+엄격한 단위 테스트가 필수인가?
+    ↓ Yes → [전략 3] 완전 의존성 주입
+    ↓ No → [전략 1] Autoload 유지
+```
+
+---
+
+##### 실전 체크리스트
+
+새로운 매니저/시스템을 작성할 때 확인:
+
+1. **클래스 성격 파악**
+   - [ ] 이 클래스가 상태를 관리하는가?
+   - [ ] 복잡한 비즈니스 로직이 있는가?
+   - [ ] 단위 테스트가 필요한가?
+
+2. **전략 선택**
+   - [ ] 순수 함수 성격 → 전략 1 (Autoload 유지)
+   - [ ] 매니저 성격 → 전략 2 (하이브리드)
+   - [ ] 엄격한 테스트 필요 → 전략 3 (완전 주입)
+
+3. **구현 시 확인**
+   - [ ] `initialize()` 메서드에 선택적 파라미터 추가
+   - [ ] 기본값으로 Autoload 사용 (`= null`)
+   - [ ] 테스트에서 Mock 주입 가능
+
+---
+
+##### 프로젝트 적용 가이드
+
+**현재 프로젝트 구조:**
+
+```
+[Autoload로 유지 - 전략 1]
+  GridSystem (좌표 변환 유틸리티)
+  GameConfig (전역 설정)
+
+[하이브리드 접근 - 전략 2]
+  BuildingManager (건물 생성/관리)
+  EnemyManager (미래 구현)
+  ItemManager (미래 구현)
+```
+
+**구현 우선순위:**
+
+1. ✅ **GridSystem은 Autoload로 유지**
+   - 순수 함수 성격
+   - 통합 테스트로 검증
+
+2. ✅ **BuildingManager는 하이브리드로 리팩토링**
+   - 복잡한 비즈니스 로직
+   - 단위 테스트 필요
+
+3. 🔜 **향후 매니저는 처음부터 하이브리드로 작성**
+   - `initialize(required, dependency = null)` 패턴 적용
+
+---
+
+##### 안티 패턴 (피해야 할 것)
+
+**❌ 안티 패턴 1: 모든 것을 완전 의존성 주입으로 변경**
+```gdscript
+# GridSystem까지 의존성 주입? → 과도한 엔지니어링!
+func initialize(parent, grid_system, game_config, sound_manager, ...):
+    # 너무 많은 파라미터 → 유지보수 악몽
+```
+
+**❌ 안티 패턴 2: Autoload를 직접 참조하면서 테스트 시도**
+```gdscript
+# building_manager.gd
+func can_build_at(...):
+    # Autoload 직접 사용 (테스트 불가능)
+    if not GridSystem.is_valid_position(...):
+```
+
+**✅ 올바른 방법: 하이브리드 접근**
+```gdscript
+var grid_system_ref = null
+
+func initialize(parent, grid_system = null):
+    grid_system_ref = grid_system if grid_system else GridSystem
+
+func can_build_at(...):
+    # 주입된 인스턴스 사용 (테스트 가능)
+    if not grid_system_ref.is_valid_position(...):
+```
+
+---
+
+##### 핵심 교훈
+
+1. **실용성 우선**: Godot의 Autoload는 강력한 도구. 무조건 제거할 필요 없음
+2. **선택적 적용**: 클래스 성격에 맞는 전략 선택
+3. **하이브리드가 최선**: 실제 게임의 편의성 + 테스트 가능성 확보
+4. **점진적 개선**: 모든 것을 한 번에 리팩토링하지 말고, 필요한 부분부터 개선
+
+> "완벽한 아키텍처는 존재하지 않는다. 상황에 맞는 최선의 선택만 있을 뿐이다."
+> - Pragmatic Programmer
+
 ## 4. Godot 내장 기능 우선 사용 (중요!)
 
 **원칙**: 기능 구현 시 **항상 Godot 내장 기능을 먼저 검토**하고 활용
