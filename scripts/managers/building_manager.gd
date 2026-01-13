@@ -8,6 +8,20 @@ extends Node
 ## - Dependency Inversion: TileMapLayer 대신 GridSystem에 의존
 
 # ============================================================
+# 시그널
+# ============================================================
+
+## 건물 배치 시작 시그널 (UI에서 건물 선택 시)
+signal building_placement_started(building_data: BuildingData)
+
+## 건물 배치 성공 시그널
+signal building_placed(building_data: BuildingData, grid_pos: Vector2i)
+
+## 건물 배치 실패 시그널
+signal building_placement_failed(reason: String)
+
+
+# ============================================================
 # 리소스 참조
 # ============================================================
 
@@ -42,42 +56,93 @@ func initialize(parent_node: Node2D) -> void:
 # 건물 생성
 # ============================================================
 
+## 특정 위치에 건물을 건설할 수 있는지 검증
+##
+## 검증 항목:
+## 1. 맵 범위 검증 (GridSystem.is_valid_position)
+## 2. 기존 건물 존재 여부 (BuildingManager.has_building)
+## 3. 건물 크기 고려 (grid_size)
+##
+## @param building_data: 건설할 건물 데이터
+## @param grid_pos: 건설할 그리드 좌표 (건물의 좌상단 위치)
+## @return: {success: bool, reason: String}
+func can_build_at(building_data: BuildingData, grid_pos: Vector2i) -> Dictionary:
+	# 1. building_data 유효성 확인
+	if not building_data:
+		return {"success": false, "reason": "건물 데이터가 없습니다"}
+
+	# 2. 건물 크기 가져오기
+	var grid_size: Vector2i = building_data.grid_size
+
+	# 3. 맵 범위 검증 (GridSystem)
+	if not GridSystem.is_valid_position(grid_pos, grid_size):
+		return {"success": false, "reason": "맵 범위를 벗어났습니다"}
+
+	# 4. 건물이 차지하는 모든 타일에 기존 건물이 있는지 확인
+	for x in range(grid_size.x):
+		for y in range(grid_size.y):
+			var check_pos = grid_pos + Vector2i(x, y)
+			if has_building(check_pos):
+				return {"success": false, "reason": "이미 건물이 존재합니다 (Grid: %s)" % GridSystem.grid_to_string(check_pos)}
+
+	# 5. 모든 검증 통과
+	return {"success": true, "reason": ""}
+
+
 ## 특정 그리드 위치에 건물 생성
 ## grid_pos: 그리드 좌표
 ## building_data: (선택) BuildingData Resource - 제공 시 initialize() 호출
 ## 반환값: 생성된 BuildingEntity 인스턴스 (실패 시 null)
 func create_building(grid_pos: Vector2i, building_data: BuildingData = null) -> Node2D:
-	# 이미 건물이 존재하는 위치인지 확인
-	if grid_buildings.has(grid_pos):
-		push_warning("[BuildingManager] 이미 건물이 존재: ", grid_pos)
-		return grid_buildings[grid_pos]
-
-	# 부모 노드가 설정되지 않았으면 에러
+	# 1. 부모 노드가 설정되지 않았으면 에러
 	if not buildings_parent:
 		push_error("[BuildingManager] 부모 노드가 설정되지 않았습니다. initialize()를 먼저 호출하세요.")
 		return null
 
-	# BuildingEntity 인스턴스 생성
+	# 2. building_data가 있으면 can_build_at()로 사전 검증
+	if building_data:
+		var validation_result = can_build_at(building_data, grid_pos)
+		if not validation_result.success:
+			push_warning("[BuildingManager] 건설 불가: ", validation_result.reason)
+			building_placement_failed.emit(validation_result.reason)
+			return null
+	else:
+		# building_data가 없으면 기존 방식으로 간단히 검증
+		if grid_buildings.has(grid_pos):
+			push_warning("[BuildingManager] 이미 건물이 존재: ", grid_pos)
+			building_placement_failed.emit("이미 건물이 존재합니다")
+			return null
+
+	# 3. BuildingEntity 인스턴스 생성
 	var building = BuildingEntityScene.instantiate()
 
-	# 그리드 좌표 설정
+	# 4. 그리드 좌표 설정
 	building.grid_position = grid_pos
 
-	# 월드 좌표 계산 (GridSystem 사용!)
+	# 5. 월드 좌표 계산 (GridSystem 사용!)
 	# GridSystem이 TileMapLayer를 캡슐화하여 정확한 좌표 제공
 	var world_pos: Vector2 = GridSystem.grid_to_world(grid_pos)
 	building.position = world_pos
 
-	# 씬 트리에 추가
+	# 6. 씬 트리에 추가
 	buildings_parent.add_child(building)
 
-	# Dictionary에 등록
-	grid_buildings[grid_pos] = building
+	# 7. Dictionary에 등록 (건물 크기 고려)
+	if building_data:
+		var grid_size: Vector2i = building_data.grid_size
+		# 건물이 차지하는 모든 타일을 Dictionary에 등록
+		for x in range(grid_size.x):
+			for y in range(grid_size.y):
+				var occupied_pos = grid_pos + Vector2i(x, y)
+				grid_buildings[occupied_pos] = building
+	else:
+		grid_buildings[grid_pos] = building
 
-	# ⭐ Resource 기반 초기화 (의존성 주입 패턴)
+	# 8. ⭐ Resource 기반 초기화 (의존성 주입 패턴)
 	if building_data:
 		building.initialize(building_data)
 		print("[BuildingManager] 건물 생성 (Resource): ", building_data.entity_name, " at Grid ", grid_pos, " → World ", world_pos)
+		building_placed.emit(building_data, grid_pos)
 	else:
 		print("[BuildingManager] 건물 생성: Grid ", grid_pos, " → World ", world_pos)
 
@@ -139,8 +204,17 @@ func remove_building(grid_pos: Vector2i) -> void:
 
 	var building = grid_buildings[grid_pos]
 
-	# Dictionary에서 제거
-	grid_buildings.erase(grid_pos)
+	# 건물이 차지하는 모든 타일을 Dictionary에서 제거
+	if building.data:
+		var grid_size: Vector2i = building.data.grid_size
+		var base_pos: Vector2i = building.grid_position
+		for x in range(grid_size.x):
+			for y in range(grid_size.y):
+				var occupied_pos = base_pos + Vector2i(x, y)
+				grid_buildings.erase(occupied_pos)
+	else:
+		# data가 없으면 단일 타일만 제거 (기존 방식)
+		grid_buildings.erase(grid_pos)
 
 	# 씬 트리에서 제거
 	building.queue_free()

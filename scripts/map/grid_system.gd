@@ -118,6 +118,42 @@ static func is_valid_grid_position(grid_pos: Vector2i, min_pos: Vector2i, max_po
 			grid_pos.y >= min_pos.y and grid_pos.y <= max_pos.y)
 
 
+## 그리드 좌표가 맵 범위 내에 있는지 확인 (건물 크기 고려)
+##
+## TileMapLayer의 사용 중인 타일 범위를 기준으로 검증
+## 건물 크기(grid_size)를 고려하여 모든 타일이 맵 안에 있는지 확인
+##
+## @param grid_pos: 검증할 그리드 좌표 (건물의 좌상단 위치)
+## @param grid_size: 건물 크기 (그리드 단위, 기본값: 1x1)
+## @return: 모든 타일이 맵 범위 내에 있으면 true, 하나라도 벗어나면 false
+func is_valid_position(grid_pos: Vector2i, grid_size: Vector2i = Vector2i(1, 1)) -> bool:
+	# 1. ground_layer 초기화 확인
+	if not ground_layer:
+		push_error("[GridSystem] ground_layer가 초기화되지 않았습니다!")
+		return false
+
+	# 2. 맵의 사용 중인 타일 범위 가져오기
+	var used_rect: Rect2i = ground_layer.get_used_rect()
+
+	# 3. 건물이 차지하는 모든 타일이 맵 범위 내에 있는지 확인
+	# grid_pos는 건물의 좌상단 위치
+	# grid_size만큼의 영역을 검사
+	for x in range(grid_size.x):
+		for y in range(grid_size.y):
+			var check_pos = grid_pos + Vector2i(x, y)
+
+			# used_rect 범위를 벗어나면 false
+			if not used_rect.has_point(check_pos):
+				return false
+
+			# 해당 위치에 타일이 실제로 존재하는지 확인
+			var tile_data: TileData = ground_layer.get_cell_tile_data(check_pos)
+			if tile_data == null:
+				return false  # 타일이 없는 빈 공간
+
+	return true
+
+
 ## 그리드 좌표를 문자열로 변환 (디버그용)
 static func grid_to_string(grid_pos: Vector2i) -> String:
 	return "(%d, %d)" % [grid_pos.x, grid_pos.y]
