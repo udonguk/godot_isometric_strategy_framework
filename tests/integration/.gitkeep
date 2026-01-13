@@ -1,0 +1,8 @@
+# Integration Tests
+
+이 디렉토리는 통합 테스트를 위한 공간입니다.
+
+## 예정된 테스트
+
+- `test_building_construction.gd` - 건설 시스템 전체 워크플로우 테스트
+- `test_navigation_integration.gd` - Navigation 시스템 통합 테스트
