@@ -30,6 +30,18 @@ const BuildingEntityScene = preload("res://scenes/entitys/building_entity.tscn")
 
 
 # ============================================================
+# 의존성
+# ============================================================
+
+## GridSystem 참조 (의존성 주입)
+##
+## ✅ 하이브리드 접근법:
+## - 실제 게임: initialize() 호출 시 생략 → Autoload 자동 사용
+## - 테스트: Mock GridSystem 주입 → 단위 테스트 가능
+var grid_system_ref: GridSystemNode = null
+
+
+# ============================================================
 # 건물 관리 데이터
 # ============================================================
 
@@ -45,10 +57,30 @@ var buildings_parent: Node2D = null
 # 초기화
 # ============================================================
 
-## 매니저 초기화
-## parent_node: 엔티티를 추가할 부모 노드 (예: test_map의 Entities 노드)
-func initialize(parent_node: Node2D) -> void:
+## BuildingManager 초기화
+##
+## @param parent_node: 건물 엔티티가 추가될 부모 노드 (필수)
+## @param grid_system: (선택) GridSystem 인스턴스. 생략 시 Autoload 사용
+##
+## 💡 설계 의도 (Dependency Injection - 하이브리드 접근):
+## - 실제 게임에서는 grid_system 파라미터를 생략하면 Autoload가 자동으로 사용됨
+## - 테스트에서는 Mock GridSystem을 주입하여 독립적인 단위 테스트 가능
+## - 이 방식으로 Autoload의 편의성과 테스트 가능성을 모두 확보
+##
+## 예시:
+##   # 실제 게임 (main.gd)
+##   BuildingManager.initialize(entities_parent)  # Autoload 자동 사용
+##
+##   # 테스트 (test_building_manager.gd)
+##   var mock_grid = GridSystemNode.new()
+##   BuildingManager.initialize(entities_parent, mock_grid)  # Mock 주입
+func initialize(parent_node: Node2D, grid_system: GridSystemNode = null) -> void:
 	buildings_parent = parent_node
+
+	# 의존성 주입 (Dependency Injection)
+	# grid_system이 제공되면 사용, 없으면 Autoload 사용
+	grid_system_ref = grid_system if grid_system else GridSystem
+
 	print("[BuildingManager] 초기화 완료 - 부모 노드: ", parent_node.name)
 
 
@@ -74,8 +106,8 @@ func can_build_at(building_data: BuildingData, grid_pos: Vector2i) -> Dictionary
 	# 2. 건물 크기 가져오기
 	var grid_size: Vector2i = building_data.grid_size
 
-	# 3. 맵 범위 검증 (GridSystem)
-	if not GridSystem.is_valid_position(grid_pos, grid_size):
+	# 3. 맵 범위 검증 (주입된 GridSystem 인스턴스 사용)
+	if not grid_system_ref.is_valid_position(grid_pos, grid_size):
 		return {"success": false, "reason": "맵 범위를 벗어났습니다"}
 
 	# 4. 건물이 차지하는 모든 타일에 기존 건물이 있는지 확인
@@ -83,7 +115,7 @@ func can_build_at(building_data: BuildingData, grid_pos: Vector2i) -> Dictionary
 		for y in range(grid_size.y):
 			var check_pos = grid_pos + Vector2i(x, y)
 			if has_building(check_pos):
-				return {"success": false, "reason": "이미 건물이 존재합니다 (Grid: %s)" % GridSystem.grid_to_string(check_pos)}
+				return {"success": false, "reason": "이미 건물이 존재합니다 (Grid: %s)" % grid_system_ref.grid_to_string(check_pos)}
 
 	# 5. 모든 검증 통과
 	return {"success": true, "reason": ""}
@@ -119,9 +151,9 @@ func create_building(grid_pos: Vector2i, building_data: BuildingData = null) -> 
 	# 4. 그리드 좌표 설정
 	building.grid_position = grid_pos
 
-	# 5. 월드 좌표 계산 (GridSystem 사용!)
+	# 5. 월드 좌표 계산 (주입된 GridSystem 인스턴스 사용)
 	# GridSystem이 TileMapLayer를 캡슐화하여 정확한 좌표 제공
-	var world_pos: Vector2 = GridSystem.grid_to_world(grid_pos)
+	var world_pos: Vector2 = grid_system_ref.grid_to_world(grid_pos)
 	building.position = world_pos
 
 	# 6. 씬 트리에 추가

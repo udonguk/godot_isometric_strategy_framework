@@ -39,9 +39,11 @@ func after_each():
 
 ## 테스트용 10x10 맵 생성
 func _setup_test_map():
-	# TileSet에 소스 추가 (더미)
+	# TileSet에 소스 추가
 	var source = TileSetAtlasSource.new()
 	source.texture_region_size = Vector2i(64, 32)
+	# ✅ 아틀라스 좌표 (0, 0)에 타일 생성 (TileData 생성)
+	source.create_tile(Vector2i(0, 0))
 	ground_layer.tile_set.add_source(source, 0)
 
 	# 10x10 타일 배치

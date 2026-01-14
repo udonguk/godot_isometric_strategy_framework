@@ -55,47 +55,52 @@ func can_build_at(...):
 ### Phase 1: BuildingManager 리팩토링 ✅
 
 #### 1.1. 멤버 변수 추가
-- [ ] `grid_system_ref: GridSystemNode` 멤버 변수 추가
-- [ ] 주석으로 의존성 주입 의도 명시
+- [x] `grid_system_ref: GridSystemNode` 멤버 변수 추가
+- [x] 주석으로 의존성 주입 의도 명시
 
 #### 1.2. initialize() 메서드 수정
-- [ ] `grid_system: GridSystemNode = null` 파라미터 추가
-- [ ] 의존성 주입 로직 추가: `grid_system_ref = grid_system if grid_system else GridSystem`
-- [ ] 주석으로 하이브리드 접근법 설명
+- [x] `grid_system: GridSystemNode = null` 파라미터 추가
+- [x] 의존성 주입 로직 추가: `grid_system_ref = grid_system if grid_system else GridSystem`
+- [x] 주석으로 하이브리드 접근법 설명
 
 #### 1.3. GridSystem 사용 코드 수정
-- [ ] `can_build_at()`: `GridSystem.is_valid_position()` → `grid_system_ref.is_valid_position()`
-- [ ] 기타 GridSystem 직접 참조 검색 및 수정
+- [x] `can_build_at()`: `GridSystem.is_valid_position()` → `grid_system_ref.is_valid_position()`
+- [x] 기타 GridSystem 직접 참조 검색 및 수정
 
 ---
 
-### Phase 2: 테스트 코드 수정
+### Phase 2: 테스트 코드 수정 ✅
 
 #### 2.1. test_building_manager.gd 수정
-- [ ] `before_each()`에서 Mock GridSystem을 `building_manager.initialize()`에 주입
-- [ ] 기존 코드:
+- [x] `before_each()`에서 Mock GridSystem을 `building_manager.initialize()`에 주입
+- [x] 기존 코드:
   ```gdscript
   building_manager.initialize(entities_parent)
   ```
-- [ ] 수정 코드:
+- [x] 수정 코드:
   ```gdscript
   building_manager.initialize(entities_parent, grid_system)  # Mock 주입
   ```
 
 #### 2.2. test_grid_system.gd 확인
-- [ ] GridSystem은 Autoload로 유지하므로 테스트 코드 변경 불필요
-- [ ] 단, 통합 테스트로 전환 고려 (선택사항)
+- [x] GridSystem은 Autoload로 유지하므로 테스트 코드 변경 불필요
+- [x] 단, 통합 테스트로 전환 고려 (선택사항)
+
+#### 2.3. 테스트 환경 수정 (추가)
+- [x] `test_building_manager.gd`의 `_setup_test_map()`에 `source.create_tile(Vector2i(0, 0))` 추가
+- [x] `test_grid_system.gd`의 `_setup_test_map()`에 `source.create_tile(Vector2i(0, 0))` 추가
 
 ---
 
-### Phase 3: 실제 게임 코드 확인
+### Phase 3: 실제 게임 코드 확인 ✅
 
 #### 3.1. main.gd 또는 test_map.gd 확인
-- [ ] BuildingManager 초기화 코드 검토
-- [ ] 기존 코드가 그대로 작동하는지 확인 (Autoload 자동 사용)
-- [ ] 선택적으로 명시적 전달 가능:
+- [x] BuildingManager 초기화 코드 검토
+- [x] 기존 코드가 그대로 작동하는지 확인 (Autoload 자동 사용)
+  - `test_map.gd:117` - `building_manager.initialize(entities_container)` 호환성 확인
+- [x] 선택적으로 명시적 전달 가능:
   ```gdscript
-  # 옵션 1: 파라미터 생략 (Autoload 사용)
+  # 옵션 1: 파라미터 생략 (Autoload 사용) - 현재 사용 중
   BuildingManager.initialize(entities_parent)
 
   # 옵션 2: 명시적 전달
@@ -373,12 +378,12 @@ func initialize(parent: Node2D, grid_system: GridSystemNode = null):
 
 ## ✅ 완료 기준
 
-- [ ] BuildingManager에 `grid_system_ref` 멤버 변수 추가
-- [ ] `initialize()` 메서드에 선택적 `grid_system` 파라미터 추가
-- [ ] `can_build_at()`에서 `grid_system_ref` 사용
-- [ ] 테스트 코드에서 Mock GridSystem 주입
-- [ ] 모든 단위 테스트 통과 (31/31)
-- [ ] 실제 게임 정상 작동 확인
+- [x] BuildingManager에 `grid_system_ref` 멤버 변수 추가
+- [x] `initialize()` 메서드에 선택적 `grid_system` 파라미터 추가
+- [x] `can_build_at()`에서 `grid_system_ref` 사용
+- [x] 테스트 코드에서 Mock GridSystem 주입
+- [ ] 모든 단위 테스트 통과 (31/31) - 테스트 실행 필요
+- [ ] 실제 게임 정상 작동 확인 - 게임 실행 필요
 - [ ] 리팩토링 내용 커밋
 
 ---

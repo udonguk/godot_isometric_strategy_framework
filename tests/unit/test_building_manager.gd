@@ -35,15 +35,8 @@ func before_each():
 	# 테스트용 타일 배치 (10x10 맵)
 	_setup_test_map()
 
-	# GridSystem 초기화 (Autoload 대체)
+	# GridSystem 초기화
 	grid_system.initialize(ground_layer)
-
-	# Autoload GridSystem을 Mock으로 대체 (GUT의 double 기능 사용 가능)
-	# 여기서는 간단하게 전역 참조로 대체
-	# 실제로는 Dependency Injection을 사용하는 것이 더 좋음
-	# 하지만 BuildingManager는 GridSystem Autoload에 의존하므로
-	# 테스트 전에 GridSystem Autoload가 설정되어 있어야 함
-	# 임시 해결: GridSystem을 Autoload로 추가 (project.godot)
 
 	# BuildingManager 인스턴스 생성
 	var BuildingManagerScript = load("res://scripts/managers/building_manager.gd")
@@ -54,8 +47,9 @@ func before_each():
 	entities_parent = Node2D.new()
 	add_child(entities_parent)
 
-	# BuildingManager 초기화
-	building_manager.initialize(entities_parent)
+	# ✅ BuildingManager 초기화 (Mock GridSystem 주입)
+	# 하이브리드 의존성 주입 패턴: 테스트에서는 Mock을 주입하여 Autoload 대신 사용
+	building_manager.initialize(entities_parent, grid_system)
 
 	# Mock BuildingData 생성
 	_create_mock_building_data()
@@ -75,6 +69,8 @@ func _setup_test_map():
 	# TileSet에 소스 추가
 	var source = TileSetAtlasSource.new()
 	source.texture_region_size = Vector2i(64, 32)
+	# ✅ 아틀라스 좌표 (0, 0)에 타일 생성 (TileData 생성)
+	source.create_tile(Vector2i(0, 0))
 	ground_layer.tile_set.add_source(source, 0)
 
 	# 10x10 타일 배치
