@@ -34,6 +34,9 @@ const UnitEntityScene = preload("res://scenes/entitys/unit_entity.tscn")
 ## Entities 컨테이너 참조 (건물, 유닛 등 동적 엔티티 - z_index = 1)
 @onready var entities_container: Node2D = $World/NavigationRegion2D/Entities
 
+## NavigationRegion2D 참조 (건물 배치 시 자동 bake용)
+@onready var navigation_region: NavigationRegion2D = $World/NavigationRegion2D
+
 
 # ============================================================
 # 매니저 인스턴스
@@ -111,10 +114,10 @@ func _initialize_systems() -> void:
 	# 3단계: Navigation Map 캐싱 (경로 찾기에 필요)
 	GridSystem.cache_navigation_map()
 
-	# 4단계: BuildingManager 초기화 (GridSystem 의존)
+	# 4단계: BuildingManager 초기화 (GridSystem 의존, NavigationRegion2D 전달)
 	building_manager = BuildingManager.new()
 	add_child(building_manager)
-	building_manager.initialize(entities_container)
+	building_manager.initialize(entities_container, null, navigation_region)
 
 
 ## NavigationRegion2D가 NavigationServer2D에 완전히 등록될 때까지 대기합니다.

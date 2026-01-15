@@ -52,6 +52,9 @@ var grid_buildings: Dictionary = {}
 ## 엔티티들을 추가할 부모 노드 (Entities 컨테이너 - z_index = 1)
 var buildings_parent: Node2D = null
 
+## NavigationRegion2D 참조 (건물 배치 시 자동 bake용)
+var navigation_region: NavigationRegion2D = null
+
 
 # ============================================================
 # 초기화
@@ -61,6 +64,7 @@ var buildings_parent: Node2D = null
 ##
 ## @param parent_node: 건물 엔티티가 추가될 부모 노드 (필수)
 ## @param grid_system: (선택) GridSystem 인스턴스. 생략 시 Autoload 사용
+## @param nav_region: (선택) NavigationRegion2D. 제공 시 건물 배치 후 자동 bake
 ##
 ## 💡 설계 의도 (Dependency Injection - 하이브리드 접근):
 ## - 실제 게임에서는 grid_system 파라미터를 생략하면 Autoload가 자동으로 사용됨
@@ -69,17 +73,20 @@ var buildings_parent: Node2D = null
 ##
 ## 예시:
 ##   # 실제 게임 (main.gd)
-##   BuildingManager.initialize(entities_parent)  # Autoload 자동 사용
+##   BuildingManager.initialize(entities_parent, null, navigation_region)
 ##
 ##   # 테스트 (test_building_manager.gd)
 ##   var mock_grid = GridSystemNode.new()
 ##   BuildingManager.initialize(entities_parent, mock_grid)  # Mock 주입
-func initialize(parent_node: Node2D, grid_system: GridSystemNode = null) -> void:
+func initialize(parent_node: Node2D, grid_system: GridSystemNode = null, nav_region: NavigationRegion2D = null) -> void:
 	buildings_parent = parent_node
 
 	# 의존성 주입 (Dependency Injection)
 	# grid_system이 제공되면 사용, 없으면 Autoload 사용
 	grid_system_ref = grid_system if grid_system else GridSystem
+
+	# NavigationRegion2D 저장 (건물 배치 시 자동 bake용)
+	navigation_region = nav_region
 
 	print("[BuildingManager] 초기화 완료 - 부모 노드: ", parent_node.name)
 
@@ -178,6 +185,9 @@ func create_building(grid_pos: Vector2i, building_data: BuildingData = null) -> 
 	else:
 		print("[BuildingManager] 건물 생성: Grid ", grid_pos, " → World ", world_pos)
 
+	# 9. ⭐ Navigation 자동 bake (건물이 장애물로 등록됨)
+	_bake_navigation_async()
+
 	return building
 
 
@@ -253,6 +263,9 @@ func remove_building(grid_pos: Vector2i) -> void:
 
 	print("[BuildingManager] 건물 제거: ", grid_pos)
 
+	# Navigation 자동 bake (장애물 제거 반영)
+	_bake_navigation_async()
+
 
 ## 모든 건물 제거
 func clear_all_buildings() -> void:
@@ -261,6 +274,26 @@ func clear_all_buildings() -> void:
 
 	grid_buildings.clear()
 	print("[BuildingManager] 모든 건물 제거 완료")
+
+
+# ============================================================
+# Navigation Bake (내부 헬퍼)
+# ============================================================
+
+## Navigation 비동기 bake (건물 배치/제거 시 자동 호출)
+##
+## NavigationRegion2D가 Static Colliders 방식으로 장애물을 감지하므로
+## 건물의 StaticBody2D가 씬 트리에 추가된 후 bake해야 함
+func _bake_navigation_async() -> void:
+	if not navigation_region:
+		return  # NavigationRegion2D가 없으면 skip
+
+	# StaticBody2D가 물리 서버에 등록될 때까지 1 프레임 대기
+	await get_tree().physics_frame
+
+	# Navigation Mesh 갱신
+	navigation_region.bake_navigation_polygon()
+	print("[BuildingManager] Navigation 자동 bake 완료")
 
 
 # ============================================================

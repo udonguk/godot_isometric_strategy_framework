@@ -30,10 +30,10 @@
   - [x] `GridSystem.is_valid_position(grid_pos, grid_size)` - 맵 범위 검증
   - [x] 건물 크기 고려 (`grid_size`) - 2x2, 3x3 건물 지원
 
-- [ ] **Navigation 장애물 등록**
-  - [ ] TileMapLayer의 `navigation_enabled` 활성화 확인
-  - [ ] 건물 배치 시 Navigation 장애물로 등록
-  - [ ] Navigation bake 자동 트리거 확인
+- [x] **Navigation 장애물 등록** ✅
+  - [x] ~~TileMapLayer의 `navigation_enabled` 활성화 확인~~ (불필요 - Static Colliders 방식 사용)
+  - [x] 건물 배치 시 Navigation 장애물로 등록 (StaticBody2D collision_layer = 4)
+  - [x] Navigation bake 자동 트리거 확인 (BuildingManager._bake_navigation_async())
 
 #### 2.2. BuildingManager 메서드 추가 ✅
 - [x] `can_build_at(building_data, grid_pos) -> Dictionary`

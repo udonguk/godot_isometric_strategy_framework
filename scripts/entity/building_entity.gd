@@ -57,13 +57,10 @@ func _ready() -> void:
 	if selection_indicator:
 		selection_indicator.visible = false
 
-	# StaticBody2D는 Navigation 전용이므로 클릭 레이어에서 제외
-	# InputManager가 Area2D만 감지하도록 collision_layer 0으로 설정
-	if has_node("StaticBody2D"):
-		var static_body = $StaticBody2D as StaticBody2D
-		if static_body:
-			static_body.collision_layer = 0  # 클릭 감지 비활성화
-			static_body.collision_mask = 0   # 충돌 감지 비활성화
+	# StaticBody2D는 Navigation 장애물 전용
+	# collision_layer = 4 (Layer 3)는 씬에서 이미 설정됨
+	# NavigationRegion2D의 parsed_collision_mask = 4와 매칭하여 장애물로 인식됨
+	# 클릭 감지는 Area2D가 담당하므로 StaticBody2D는 수정하지 않음
 
 	# 데이터가 있으면 비주얼 업데이트 (Resource 기반 시스템)
 	if data:
