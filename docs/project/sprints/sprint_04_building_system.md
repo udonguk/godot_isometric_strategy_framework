@@ -58,27 +58,30 @@ signal building_placement_failed(reason: String)
 ### Phase 3: 건물 구축 UI
 
 #### 3.1. 최소 UI 요구사항
-- [ ] **건물 선택 버튼** (3개: house, farm, shop)
+- [x] **건물 선택 버튼** (3개: house, farm, shop)
   - 각 버튼 클릭 시 건설 모드 진입
-  - 선택된 건물 강조 표시
+  - ~~선택된 건물 강조 표시~~ (TODO로 남김 - Phase 5 이후)
 
-- [ ] **건설 취소 버튼**
-  - ESC 키 또는 UI 버튼으로 취소
+- [x] **건설 취소 버튼**
+  - ESC 키로 취소 (구현 완료)
+  - ~~UI 버튼으로 취소~~ (선택사항 - 필요 시 추가)
 
 #### 3.2. UI 구현
-- [ ] SimpleConstructionPanel.tscn 생성 (최소 디자인)
+- [x] ~~SimpleConstructionPanel.tscn~~ → **ConstructionMenu.tscn** (이미 존재)
   ```
-  Panel (좌상단 또는 하단)
-  ├── HBoxContainer
-  │   ├── BuildingButton (house_01)
-  │   ├── BuildingButton (farm_01)
-  │   └── BuildingButton (shop_01)
-  └── CancelButton
+  Panel (화면 하단)
+  ├── CollapsedBar (접힌 상태)
+  │   └── ExpandButton
+  └── ExpandedPanel (펼쳐진 상태)
+      └── BuildingList (HBoxContainer)
+          ├── HouseButton
+          ├── FarmButton
+          └── ShopButton
   ```
 
-- [ ] SimpleConstructionPanel.gd 스크립트 작성
-  - 버튼 클릭 → `BuildingManager` 시그널 발송
-  - 건설 모드 상태 표시
+- [x] ConstructionMenu.gd 스크립트 작성
+  - 버튼 클릭 → `BuildingManager.start_building_placement()` 호출
+  - BuildingManager 시그널 연결 (initialize 메서드)
 
 #### 3.3. 미리보기 시스템 (선택)
 - [ ] 마우스 커서를 따라다니는 건물 스프라이트
@@ -89,26 +92,28 @@ signal building_placement_failed(reason: String)
 ### Phase 4: UI ↔ 로직 연결
 
 #### 4.1. 시그널 연결
-- [ ] UI → BuildingManager
+- [x] UI → BuildingManager
   ```gdscript
-  # SimpleConstructionPanel.gd
+  # ConstructionMenu.gd
   func _on_house_button_pressed():
       var house_data = BuildingDatabase.get_building_by_id("house_01")
-      BuildingManager.building_placement_started.emit(house_data)
+      building_manager.start_building_placement(house_data)
   ```
 
-- [ ] BuildingManager → UI
+- [x] BuildingManager → UI
   ```gdscript
-  # SimpleConstructionPanel.gd
-  func _ready():
-      BuildingManager.building_placed.connect(_on_building_placed)
-      BuildingManager.building_placement_failed.connect(_on_placement_failed)
+  # ConstructionMenu.gd
+  func initialize(manager):
+      building_manager = manager
+      building_manager.building_placed.connect(_on_building_placed)
+      building_manager.building_placement_failed.connect(_on_placement_failed)
+      building_manager.building_placement_started.connect(_on_placement_started)
   ```
 
 #### 4.2. 입력 처리
-- [ ] 건설 모드에서 맵 클릭 감지
-- [ ] 마우스 위치 → 그리드 좌표 변환
-- [ ] `BuildingManager.create_building()` 호출
+- [x] 건설 모드에서 맵 클릭 감지 (test_map.gd `_unhandled_input`)
+- [x] 마우스 위치 → 그리드 좌표 변환 (`GridSystem.world_to_grid`)
+- [x] `BuildingManager.try_place_building()` 호출
 
 ---
 
