@@ -68,6 +68,13 @@ func after_each():
 func _setup_test_map():
 	# TileSet에 소스 추가
 	var source = TileSetAtlasSource.new()
+
+	# ✅ 더미 텍스처 생성 및 할당 (필수!)
+	# TileSetAtlasSource는 텍스처가 없으면 get_cell_tile_data()가 null을 반환함
+	var dummy_image = Image.create(64, 32, false, Image.FORMAT_RGBA8)
+	var dummy_texture = ImageTexture.create_from_image(dummy_image)
+	source.texture = dummy_texture
+
 	source.texture_region_size = Vector2i(64, 32)
 	# ✅ 아틀라스 좌표 (0, 0)에 타일 생성 (TileData 생성)
 	source.create_tile(Vector2i(0, 0))
@@ -81,23 +88,30 @@ func _setup_test_map():
 
 ## Mock BuildingData 생성
 func _create_mock_building_data():
+	# ✅ 더미 텍스처 생성 (BuildingEntity가 텍스처를 요구함)
+	var dummy_image = Image.create(64, 64, false, Image.FORMAT_RGBA8)
+	var dummy_texture = ImageTexture.create_from_image(dummy_image)
+
 	# 1x1 건물
 	test_building_data_1x1 = BuildingData.new()
 	test_building_data_1x1.entity_id = "test_house_1x1"
 	test_building_data_1x1.entity_name = "테스트 주택 1x1"
 	test_building_data_1x1.grid_size = Vector2i(1, 1)
+	test_building_data_1x1.sprite_texture = dummy_texture  # ✅ 텍스처 설정
 
 	# 2x2 건물
 	test_building_data_2x2 = BuildingData.new()
 	test_building_data_2x2.entity_id = "test_house_2x2"
 	test_building_data_2x2.entity_name = "테스트 주택 2x2"
 	test_building_data_2x2.grid_size = Vector2i(2, 2)
+	test_building_data_2x2.sprite_texture = dummy_texture  # ✅ 텍스처 설정
 
 	# 3x3 건물
 	test_building_data_3x3 = BuildingData.new()
 	test_building_data_3x3.entity_id = "test_house_3x3"
 	test_building_data_3x3.entity_name = "테스트 주택 3x3"
 	test_building_data_3x3.grid_size = Vector2i(3, 3)
+	test_building_data_3x3.sprite_texture = dummy_texture  # ✅ 텍스처 설정
 
 
 # ============================================================
@@ -256,7 +270,7 @@ func test_create_building_failure_outside_map():
 	# Given: 맵 밖 위치
 	var grid_pos = Vector2i(10, 5)
 
-	# When: 건물 생성 시도
+	# When: 건물 생성 시도 (push_warning이 발생하지만 의도된 동작)
 	var building = building_manager.create_building(grid_pos, test_building_data_1x1)
 
 	# Then: 실패 (null 반환)
@@ -269,7 +283,7 @@ func test_create_building_failure_overlapping():
 	var grid_pos = Vector2i(5, 5)
 	building_manager.create_building(grid_pos, test_building_data_1x1)
 
-	# When: 같은 위치에 건물 생성 시도
+	# When: 같은 위치에 건물 생성 시도 (push_warning이 발생하지만 의도된 동작)
 	var building = building_manager.create_building(grid_pos, test_building_data_1x1)
 
 	# Then: 실패 (null 반환)
@@ -311,7 +325,7 @@ func test_signal_building_placement_failed_emitted():
 	# Given: 맵 밖 위치
 	var grid_pos = Vector2i(10, 5)
 
-	# When: 건물 생성 시도
+	# When: 건물 생성 시도 (push_warning이 발생하지만 의도된 동작)
 	watch_signals(building_manager)
 	building_manager.create_building(grid_pos, test_building_data_1x1)
 

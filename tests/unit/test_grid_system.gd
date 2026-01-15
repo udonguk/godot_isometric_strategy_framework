@@ -41,6 +41,13 @@ func after_each():
 func _setup_test_map():
 	# TileSet에 소스 추가
 	var source = TileSetAtlasSource.new()
+
+	# ✅ 더미 텍스처 생성 및 할당 (필수!)
+	# TileSetAtlasSource는 텍스처가 없으면 get_cell_tile_data()가 null을 반환함
+	var dummy_image = Image.create(64, 32, false, Image.FORMAT_RGBA8)
+	var dummy_texture = ImageTexture.create_from_image(dummy_image)
+	source.texture = dummy_texture
+
 	source.texture_region_size = Vector2i(64, 32)
 	# ✅ 아틀라스 좌표 (0, 0)에 타일 생성 (TileData 생성)
 	source.create_tile(Vector2i(0, 0))
@@ -231,7 +238,7 @@ func test_invalid_position_grid_system_not_initialized():
 	var grid_pos = Vector2i(5, 5)
 	var grid_size = Vector2i(1, 1)
 
-	# When: 위치 검증
+	# When: 위치 검증 (push_error가 발생하지만 의도된 동작)
 	var result = uninitialized_grid.is_valid_position(grid_pos, grid_size)
 
 	# Then: 검증 실패

@@ -135,13 +135,13 @@ func create_building(grid_pos: Vector2i, building_data: BuildingData = null) -> 
 	if building_data:
 		var validation_result = can_build_at(building_data, grid_pos)
 		if not validation_result.success:
-			push_warning("[BuildingManager] 건설 불가: ", validation_result.reason)
+			print("[BuildingManager] 건설 불가: ", validation_result.reason)
 			building_placement_failed.emit(validation_result.reason)
 			return null
 	else:
 		# building_data가 없으면 기존 방식으로 간단히 검증
 		if grid_buildings.has(grid_pos):
-			push_warning("[BuildingManager] 이미 건물이 존재: ", grid_pos)
+			print("[BuildingManager] 이미 건물이 존재: ", grid_pos)
 			building_placement_failed.emit("이미 건물이 존재합니다")
 			return null
 

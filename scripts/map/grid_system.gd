@@ -129,7 +129,7 @@ static func is_valid_grid_position(grid_pos: Vector2i, min_pos: Vector2i, max_po
 func is_valid_position(grid_pos: Vector2i, grid_size: Vector2i = Vector2i(1, 1)) -> bool:
 	# 1. ground_layer 초기화 확인
 	if not ground_layer:
-		push_error("[GridSystem] ground_layer가 초기화되지 않았습니다!")
+		print("[GridSystem] ERROR: ground_layer가 초기화되지 않았습니다!")
 		return false
 
 	# 2. 맵의 사용 중인 타일 범위 가져오기
