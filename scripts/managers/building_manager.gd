@@ -115,7 +115,7 @@ func can_build_at(building_data: BuildingData, grid_pos: Vector2i) -> Dictionary
 		for y in range(grid_size.y):
 			var check_pos = grid_pos + Vector2i(x, y)
 			if has_building(check_pos):
-				return {"success": false, "reason": "이미 건물이 존재합니다 (Grid: %s)" % grid_system_ref.grid_to_string(check_pos)}
+				return {"success": false, "reason": "이미 건물이 존재합니다 (Grid: %s)" % GridSystemNode.grid_to_string(check_pos)}
 
 	# 5. 모든 검증 통과
 	return {"success": true, "reason": ""}
