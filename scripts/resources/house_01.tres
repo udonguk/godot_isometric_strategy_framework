@@ -14,5 +14,6 @@ entity_name = "주택"
 description = "주민이 거주하는 집입니다."
 sprite_texture = ExtResource("3_lh1ps")
 sprite_scale = Vector2(1, 1)
+sprite_offset = Vector2(0, -16)
 scene_to_spawn = ExtResource("1_8lla8")
 metadata/_custom_type_script = "uid://dm10fbbqn6tsq"

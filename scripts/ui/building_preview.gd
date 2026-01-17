@@ -164,9 +164,9 @@ func _update_texture(building_data: BuildingData) -> void:
 		else:
 			sprite.scale = Vector2.ONE
 
-		# 오프셋 적용: 바닥면 중심 오프셋
+		# 오프셋 적용: 바닥면 중심 + 데이터에서 지정한 추가 오프셋
 		var center_offset: Vector2 = BuildingEntity._calculate_center_offset(building_data.grid_size)
-		sprite.position = center_offset
+		sprite.position = center_offset + building_data.sprite_offset
 
 
 ## Grid 바닥면 오버레이 폴리곤 생성
@@ -201,12 +201,8 @@ func _update_grid_overlay(grid_size: Vector2i) -> void:
 			var tile_overlay = Polygon2D.new()
 			tile_overlay.polygon = single_tile_polygon
 
-			# 아이소메트릭 오프셋 계산
-			# Grid X+1 → 화면 (half_w, half_h)
-			# Grid Y+1 → 화면 (-half_w, half_h)
-			var offset_x: float = x * half_w - y * half_w
-			var offset_y: float = x * half_h + y * half_h
-			tile_overlay.position = Vector2(offset_x, offset_y)
+			# GridSystem 공통 함수로 화면 오프셋 계산
+			tile_overlay.position = GridSystemNode.grid_offset_to_screen(Vector2i(x, y))
 
 			# 이름으로 좌표 저장 (나중에 색상 업데이트 시 사용)
 			tile_overlay.name = "Tile_%d_%d" % [x, y]

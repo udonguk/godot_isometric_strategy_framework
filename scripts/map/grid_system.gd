@@ -112,6 +112,28 @@ static func get_manhattan_distance(pos1: Vector2i, pos2: Vector2i) -> int:
 	return abs(pos1.x - pos2.x) + abs(pos1.y - pos2.y)
 
 
+## 그리드 오프셋을 화면 오프셋으로 변환
+##
+## Godot TileMapLayer 좌표계 기준:
+## - Grid X+1: (+half_w, -half_h) = 오른쪽 위
+## - Grid Y+1: (+half_w, +half_h) = 오른쪽 아래
+##
+## @param grid_offset: 그리드 좌표 오프셋 (예: Vector2i(1, 0))
+## @return: 화면 좌표 오프셋 (픽셀 단위)
+##
+## 예시:
+##   (0, 0) → (0, 0)
+##   (1, 0) → (16, -8)
+##   (0, 1) → (16, 8)
+##   (1, 1) → (32, 0)
+static func grid_offset_to_screen(grid_offset: Vector2i) -> Vector2:
+	var half_w: float = GameConfig.HALF_TILE_WIDTH
+	var half_h: float = GameConfig.HALF_TILE_HEIGHT
+	var offset_x: float = grid_offset.x * half_w + grid_offset.y * half_w
+	var offset_y: float = -grid_offset.x * half_h + grid_offset.y * half_h
+	return Vector2(offset_x, offset_y)
+
+
 ## 그리드 좌표가 유효한 범위 내에 있는지 확인
 ## min_pos: 최소 그리드 좌표 (포함)
 ## max_pos: 최대 그리드 좌표 (포함)

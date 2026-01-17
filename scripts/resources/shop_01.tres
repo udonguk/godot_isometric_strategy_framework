@@ -13,5 +13,6 @@ entity_name = "상점"
 description = "물건을 판매하는 건물"
 sprite_texture = ExtResource("3_cp0ce")
 sprite_scale = Vector2(1, 1)
+sprite_offset = Vector2(0, -8)
 scene_to_spawn = ExtResource("1_eawb5")
 metadata/_custom_type_script = "uid://dm10fbbqn6tsq"

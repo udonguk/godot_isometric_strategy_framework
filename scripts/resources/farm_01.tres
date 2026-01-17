@@ -14,5 +14,6 @@ entity_id = "farm_01"
 entity_name = "농장"
 description = "식량을 생산합니다."
 sprite_texture = ExtResource("3_bes1y")
+sprite_offset = Vector2(0, -8)
 scene_to_spawn = ExtResource("1_pp2hn")
 metadata/_custom_type_script = "uid://dm10fbbqn6tsq"

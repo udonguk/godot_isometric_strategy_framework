@@ -107,9 +107,9 @@ func _update_visuals(building_data: BuildingData) -> void:
 		if building_data.sprite_scale != Vector2.ONE:
 			sprite.scale = building_data.sprite_scale
 
-		# 오프셋 적용: 바닥면 중심 오프셋
+		# 오프셋 적용: 바닥면 중심 + 데이터에서 지정한 추가 오프셋
 		var center_offset: Vector2 = _calculate_center_offset(building_data.grid_size)
-		sprite.position = center_offset
+		sprite.position = center_offset + building_data.sprite_offset
 	else:
 		push_warning("BuildingData에 텍스처가 설정되지 않았습니다: %s" % building_data.entity_name)
 
@@ -128,19 +128,19 @@ func _update_visuals(building_data: BuildingData) -> void:
 ##
 ## 예시:
 ##   1x1: (0, 0)   - 이동 없음
-##   2x2: (0, 8)   - 4개 타일의 중심으로
-##   3x2: (8, 12)  - 6개 타일의 중심으로
-##   2x3: (-8, 12) - 6개 타일의 중심으로
+##   2x2: (16, 0)  - 4개 타일의 중심으로
+##   3x2: (24, -4) - 6개 타일의 중심으로
+##   2x3: (24, 4)  - 6개 타일의 중심으로
 static func _calculate_center_offset(grid_size: Vector2i) -> Vector2:
+	# NxM 건물의 바닥면 중심 그리드 오프셋 (float 연산으로 정확한 중심)
+	var center_x: float = (grid_size.x - 1) / 2.0
+	var center_y: float = (grid_size.y - 1) / 2.0
+
+	# GridSystem.grid_offset_to_screen()과 동일한 좌표 변환 (float 버전)
 	var half_w: float = GameConfig.HALF_TILE_WIDTH
 	var half_h: float = GameConfig.HALF_TILE_HEIGHT
-
-	# Godot TileMapLayer 좌표계 기준:
-	# Grid X+1: (+half_w, -half_h)
-	# Grid Y+1: (+half_w, +half_h)
-	# NxM 건물의 바닥면 중심 오프셋
-	var offset_x: float = (grid_size.x + grid_size.y - 2) * half_w / 2.0
-	var offset_y: float = (grid_size.y - grid_size.x) * half_h / 2.0
+	var offset_x: float = center_x * half_w + center_y * half_w
+	var offset_y: float = -center_x * half_h + center_y * half_h
 
 	return Vector2(offset_x, offset_y)
 
