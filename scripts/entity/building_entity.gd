@@ -102,17 +102,14 @@ func _update_visuals(building_data: BuildingData) -> void:
 	# 텍스처 설정
 	if building_data.sprite_texture:
 		sprite.texture = building_data.sprite_texture
-		print("[BuildingEntity] 텍스처 설정 완료: ", building_data.entity_name)
 
 		# 스케일 적용
 		if building_data.sprite_scale != Vector2.ONE:
 			sprite.scale = building_data.sprite_scale
-			print("[BuildingEntity] 스프라이트 스케일 적용: ", building_data.sprite_scale)
 
-		# 오프셋 적용 (필요한 경우)
-		if building_data.sprite_offset != Vector2.ZERO:
-			sprite.position = building_data.sprite_offset
-			print("[BuildingEntity] 스프라이트 오프셋 적용: ", building_data.sprite_offset)
+		# 오프셋 적용: 바닥면 중심 오프셋
+		var center_offset: Vector2 = _calculate_center_offset(building_data.grid_size)
+		sprite.position = center_offset
 	else:
 		push_warning("BuildingData에 텍스처가 설정되지 않았습니다: %s" % building_data.entity_name)
 
@@ -120,25 +117,87 @@ func _update_visuals(building_data: BuildingData) -> void:
 	_update_collision_polygon(building_data.grid_size)
 
 
+## 바닥면 중심 오프셋 계산
+##
+## 건물의 기준점(grid_pos)은 좌상단 타일이지만,
+## 스프라이트 중심은 건물 바닥면의 기하학적 중심에 위치해야
+## 시각적 위치와 Grid 등록 위치가 일치합니다.
+##
+## @param grid_size: 건물 크기 (예: Vector2i(2, 2))
+## @return: 좌상단 타일 중심에서 바닥면 중심까지의 화면 오프셋
+##
+## 예시:
+##   1x1: (0, 0)   - 이동 없음
+##   2x2: (0, 8)   - 4개 타일의 중심으로
+##   3x2: (8, 12)  - 6개 타일의 중심으로
+##   2x3: (-8, 12) - 6개 타일의 중심으로
+static func _calculate_center_offset(grid_size: Vector2i) -> Vector2:
+	var half_w: float = GameConfig.HALF_TILE_WIDTH
+	var half_h: float = GameConfig.HALF_TILE_HEIGHT
+
+	# Godot TileMapLayer 좌표계 기준:
+	# Grid X+1: (+half_w, -half_h)
+	# Grid Y+1: (+half_w, +half_h)
+	# NxM 건물의 바닥면 중심 오프셋
+	var offset_x: float = (grid_size.x + grid_size.y - 2) * half_w / 2.0
+	var offset_y: float = (grid_size.y - grid_size.x) * half_h / 2.0
+
+	return Vector2(offset_x, offset_y)
+
+
+## 텍스처 앵커 오프셋 계산
+##
+## Sprite2D는 centered=true일 때 텍스처 중심이 원점에 옵니다.
+## 하지만 아이소메트릭 텍스처에서 "바닥면 중심"은 건물 높이 때문에
+## 텍스처 기하학적 중심보다 위쪽에 있습니다.
+## 이 차이를 sprite.offset으로 보정합니다.
+##
+## @param grid_size: 건물 크기
+## @param texture: 스프라이트 텍스처
+## @return: 바닥면 중심이 스프라이트 원점에 오도록 하는 offset
+static func _calculate_texture_anchor_offset(grid_size: Vector2i, texture: Texture2D) -> Vector2:
+	if texture == null:
+		return Vector2.ZERO
+
+	var half_h: float = GameConfig.HALF_TILE_HEIGHT
+
+	# 바닥면 세로 길이 (아이소메트릭 다이아몬드 높이)
+	var floor_height: float = (grid_size.x + grid_size.y) * half_h
+	# 바닥면 중심 y (텍스처 상단 기준)
+	var floor_center_y: float = floor_height / 2.0
+	# 텍스처 중심 y
+	var texture_center_y: float = texture.get_height() / 2.0
+
+	# offset: 바닥면 중심을 텍스처 중심으로 이동시키는 값
+	return Vector2(0, floor_center_y - texture_center_y)
+
+
 ## grid_size에 맞게 Collision Polygon 동적 생성
 ## 아이소메트릭 다이아몬드 형태로 NxM 타일 영역을 커버
 ##
 ## @param grid_size: 건물이 차지하는 타일 수 (예: Vector2i(2, 2))
+##
+## Godot TileMapLayer 좌표계:
+## - Grid X+1: (+half_w, -half_h) = 오른쪽 위
+## - Grid Y+1: (+half_w, +half_h) = 오른쪽 아래
 func _update_collision_polygon(grid_size: Vector2i) -> void:
-	# 아이소메트릭 타일 반크기 (TILE_SIZE = 32x32 기준)
-	var half_w: float = 16.0  # 타일 가로 반
-	var half_h: float = 8.0   # 아이소메트릭 세로 반 (가로의 절반)
+	var half_w: float = GameConfig.HALF_TILE_WIDTH
+	var half_h: float = GameConfig.HALF_TILE_HEIGHT
 
 	var w: int = grid_size.x
 	var h: int = grid_size.y
 
-	# NxM 건물의 외곽 다이아몬드 꼭짓점 계산
-	var top = Vector2(0, -half_h)
-	var right = Vector2(w * half_w, (w - 1) * half_h)
-	var bottom = Vector2((w - h) * half_w, (w + h - 1) * half_h)
-	var left = Vector2(-h * half_w, (h - 1) * half_h)
+	# NxM 건물의 외곽 다이아몬드 꼭짓점 계산 (Godot 좌표계 기준)
+	# 북쪽: 타일 (w-1, 0)의 북쪽 꼭지점
+	var top = Vector2((w - 1) * half_w, -w * half_h)
+	# 동쪽: 타일 (w-1, h-1)의 동쪽 꼭지점
+	var right = Vector2((w + h - 1) * half_w, (h - w) * half_h)
+	# 남쪽: 타일 (0, h-1)의 남쪽 꼭지점
+	var bottom = Vector2((h - 1) * half_w, h * half_h)
+	# 서쪽: 타일 (0, 0)의 서쪽 꼭지점
+	var left = Vector2(-half_w, 0)
 
-	var polygon = PackedVector2Array([right, bottom, left, top])
+	var polygon = PackedVector2Array([top, right, bottom, left])
 
 	# Area2D의 CollisionPolygon2D 업데이트
 	if has_node("Area2D/CollisionPolygon2D"):
@@ -147,5 +206,3 @@ func _update_collision_polygon(grid_size: Vector2i) -> void:
 	# StaticBody2D의 CollisionPolygon2D 업데이트 (Navigation 장애물용)
 	if has_node("StaticBody2D/CollisionPolygon2D"):
 		$StaticBody2D/CollisionPolygon2D.polygon = polygon
-
-	print("[BuildingEntity] Collision Polygon 업데이트: grid_size=", grid_size, " → ", polygon)

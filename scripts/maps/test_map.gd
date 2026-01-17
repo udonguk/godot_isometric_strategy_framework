@@ -17,6 +17,9 @@ extends Node2D
 ## UnitEntity 씬 참조 (테스트용)
 const UnitEntityScene = preload("res://scenes/entitys/unit_entity.tscn")
 
+## BuildingPreview 씬 참조 (건설 미리보기용)
+const BuildingPreviewScene = preload("res://scenes/ui/building_preview.tscn")
+
 
 # ============================================================
 # 노드 참조
@@ -125,6 +128,12 @@ func _initialize_systems() -> void:
 	# 4단계: BuildingManager 초기화 (Autoload이므로 initialize만 호출)
 	BuildingManager.initialize(entities_container, null, navigation_region)
 
+	# 5단계: 기존 건물 동기화 (StructuresTileMapLayer의 건물을 Dictionary에 등록)
+	BuildingManager.sync_existing_structures(structures_layer)
+
+	# 6단계: 건설 미리보기 설정
+	_setup_building_preview()
+
 
 ## NavigationRegion2D가 NavigationServer2D에 완전히 등록될 때까지 대기합니다.
 ##
@@ -143,6 +152,17 @@ func _wait_for_navigation_registration() -> void:
 	await get_tree().physics_frame
 
 
+## 건설 미리보기 설정
+##
+## BuildingPreview 인스턴스를 생성하고 BuildingManager에 연결합니다.
+## World 컨테이너에 추가하여 마우스 위치를 정확히 추적할 수 있게 합니다.
+func _setup_building_preview() -> void:
+	var preview = BuildingPreviewScene.instantiate()
+	world_container.add_child(preview)
+	BuildingManager.set_building_preview(preview)
+	print("[TestMap] 건설 미리보기 설정 완료")
+
+
 # ============================================================
 # 입력 처리 (건설 모드)
 # ============================================================
@@ -155,14 +175,19 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 ## 맵 클릭 처리 (건설 모드 중 건물 배치)
-func _handle_map_click(screen_pos: Vector2) -> void:
+func _handle_map_click(_screen_pos: Vector2) -> void:
 	# 건설 모드가 아니면 무시 (BuildingManager는 Autoload)
 	if not BuildingManager.is_in_placement_mode():
 		return
 
-	# 화면 좌표 → 월드 좌표 → 그리드 좌표 변환
-	var world_pos = get_global_mouse_position()
-	var grid_pos = GridSystem.world_to_grid(world_pos)
+	# BuildingPreview가 이미 계산한 보정된 좌표 사용
+	# (center_offset 보정이 적용된 정확한 grid_pos)
+	var preview = BuildingManager.building_preview
+	if not preview:
+		push_error("[TestMap] BuildingPreview가 설정되지 않았습니다")
+		return
+
+	var grid_pos: Vector2i = preview.current_grid_pos
 
 	# 건물 배치 시도
 	if BuildingManager.try_place_building(grid_pos):

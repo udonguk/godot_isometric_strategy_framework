@@ -18,10 +18,11 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	# 입력 방향 수집 (명시적 반환값 사용)
 	var keyboard_direction = _get_keyboard_input_direction()
-	var mouse_edge_direction = _get_mouse_edge_scroll_direction()
+	#var mouse_edge_direction = _get_mouse_edge_scroll_direction()
 
 	# 모든 입력 방향 합산
-	var movement_direction = keyboard_direction + mouse_edge_direction
+	#var movement_direction = keyboard_direction + mouse_edge_direction
+	var movement_direction = keyboard_direction
 
 	# 카메라 이동 적용
 	if movement_direction.length() > 0:

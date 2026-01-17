@@ -66,6 +66,9 @@ var is_placement_mode: bool = false
 ## 선택된 건물 데이터 (건설 모드 중 배치할 건물)
 var selected_building_data: BuildingData = null
 
+## 건물 배치 미리보기 참조 (선택적 - 설정 시 미리보기 기능 활성화)
+var building_preview: BuildingPreview = null
+
 
 # ============================================================
 # 초기화
@@ -102,6 +105,43 @@ func initialize(parent_node: Node2D, grid_system: GridSystemNode = null, nav_reg
 	print("[BuildingManager] 초기화 완료 - 부모 노드: ", parent_node.name)
 
 
+## 건물 배치 미리보기 설정 (선택적)
+##
+## @param preview: BuildingPreview 인스턴스
+func set_building_preview(preview: BuildingPreview) -> void:
+	building_preview = preview
+	print("[BuildingManager] 건물 미리보기 설정 완료")
+
+
+## 기존 StructuresTileMapLayer의 건물을 grid_buildings에 동기화
+##
+## TileMapLayer에 이미 배치된 건물 타일들을 grid_buildings Dictionary에 등록합니다.
+## 이를 통해 can_build_at()에서 기존 건물 위치도 검증할 수 있습니다.
+##
+## @param structures_layer: StructuresTileMapLayer 참조
+##
+## 💡 설계 의도:
+## - grid_buildings에 null 값으로 등록하여 "점유됨" 상태만 표시
+## - has_building()은 키 존재 여부만 체크하므로 기존 로직 그대로 동작
+## - get_building()은 null을 반환할 수 있음 (기존 타일은 BuildingEntity가 아님)
+func sync_existing_structures(structures_layer: TileMapLayer) -> void:
+	if not structures_layer:
+		push_warning("[BuildingManager] structures_layer가 null입니다")
+		return
+
+	# TileMapLayer의 사용된 모든 셀 가져오기
+	var used_cells: Array[Vector2i] = structures_layer.get_used_cells()
+
+	var synced_count: int = 0
+	for cell_pos in used_cells:
+		# 이미 등록된 위치는 건너뜀
+		if not grid_buildings.has(cell_pos):
+			grid_buildings[cell_pos] = null  # 점유만 표시 (BuildingEntity 없음)
+			synced_count += 1
+
+	print("[BuildingManager] 기존 건물 동기화 완료: %d개 위치 등록" % synced_count)
+
+
 # ============================================================
 # 건물 생성
 # ============================================================
@@ -132,9 +172,11 @@ func can_build_at(building_data: BuildingData, grid_pos: Vector2i) -> Dictionary
 		for y in range(grid_size.y):
 			var check_pos = grid_pos + Vector2i(x, y)
 			if has_building(check_pos):
+				# print("[BuildingManager] 건설 불가 - 기존 건물 발견: ", check_pos, " | grid_buildings keys: ", grid_buildings.keys())
 				return {"success": false, "reason": "이미 건물이 존재합니다 (Grid: %s)" % GridSystemNode.grid_to_string(check_pos)}
 
 	# 5. 모든 검증 통과
+	# print("[BuildingManager] 건설 가능: ", grid_pos, " | 현재 grid_buildings keys: ", grid_buildings.keys())
 	return {"success": true, "reason": ""}
 
 
@@ -232,6 +274,10 @@ func start_building_placement(building_data: BuildingData) -> void:
 	# ⭐ InputManager에 건설 모드 활성화 알림
 	InputManager.is_construction_mode_active = true
 
+	# ⭐ 미리보기 표시 (설정된 경우)
+	if building_preview:
+		building_preview.show_preview(building_data)
+
 	building_placement_started.emit(building_data)
 	print("[BuildingManager] 건설 모드 시작: ", building_data.entity_name)
 
@@ -247,6 +293,10 @@ func cancel_building_placement() -> void:
 	# ⭐ InputManager에 건설 모드 비활성화 알림
 	InputManager.is_construction_mode_active = false
 
+	# ⭐ 미리보기 숨김 (설정된 경우)
+	if building_preview:
+		building_preview.hide_preview()
+
 	building_placement_failed.emit("건설이 취소되었습니다")
 	print("[BuildingManager] 건설 모드 취소")
 
@@ -260,9 +310,21 @@ func try_place_building(grid_pos: Vector2i) -> bool:
 	if not is_placement_mode or selected_building_data == null:
 		return false
 
+	# 🔍 디버그: 배치 시도 시점의 상세 정보
+	var grid_size: Vector2i = selected_building_data.grid_size
+	print("[BuildingManager] === 건물 배치 시도 ===")
+	print("[BuildingManager] 건물: %s | 위치: %s | 크기: %s" % [selected_building_data.entity_name, grid_pos, grid_size])
+	print("[BuildingManager] 점유 예정 타일:")
+	for x in range(grid_size.x):
+		for y in range(grid_size.y):
+			var check_pos = grid_pos + Vector2i(x, y)
+			print("[BuildingManager]   → %s (기존 건물: %s)" % [check_pos, has_building(check_pos)])
+	print("[BuildingManager] 현재 등록된 건물 위치: %s" % [grid_buildings.keys()])
+
 	# 2. 건설 가능 여부 검증
 	var result = can_build_at(selected_building_data, grid_pos)
 	if not result.success:
+		print("[BuildingManager] 건설 불가: %s" % result.reason)
 		building_placement_failed.emit(result.reason)
 		return false
 
@@ -275,6 +337,10 @@ func try_place_building(grid_pos: Vector2i) -> bool:
 
 		# ⭐ InputManager에 건설 모드 비활성화 알림
 		InputManager.is_construction_mode_active = false
+
+		# ⭐ 미리보기 숨김 (설정된 경우)
+		if building_preview:
+			building_preview.hide_preview()
 
 		return true
 

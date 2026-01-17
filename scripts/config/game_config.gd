@@ -24,6 +24,12 @@ const COLOR_INFECTED: Color = Color.RED
 ## 타일 텍스처 크기 (픽셀)
 const TILE_SIZE: Vector2i = Vector2i(32, 32)
 
+## 아이소메트릭 타일 반크기 (화면 좌표 기준)
+## - HALF_TILE_WIDTH: 타일 너비의 절반 = TILE_SIZE.x / 2
+## - HALF_TILE_HEIGHT: 아이소메트릭 높이의 절반 = TILE_SIZE.x / 4 (2:1 비율)
+const HALF_TILE_WIDTH: float = 16.0  # TILE_SIZE.x / 2
+const HALF_TILE_HEIGHT: float = 8.0  # TILE_SIZE.x / 4
+
 ## 건물 텍스처 크기 (픽셀)
 const BUILDING_SIZE: Vector2i = Vector2i(32, 32)
 

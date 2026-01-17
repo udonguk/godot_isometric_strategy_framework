@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://va2oopgrwgd4" path="res://scenes/entitys/building_entity.tscn" id="1_pp2hn"]
 [ext_resource type="Script" uid="uid://dm10fbbqn6tsq" path="res://scripts/resources/building_data.gd" id="2_vbtmv"]
-[ext_resource type="Texture2D" uid="uid://dnjp2dqgpl8al" path="res://assets/sprites/entity/unit_circle.svg" id="3_bes1y"]
+[ext_resource type="Texture2D" path="res://assets/sprites/entity/building_1x1_farm.svg" id="3_bes1y"]
 
 [resource]
 script = ExtResource("2_vbtmv")

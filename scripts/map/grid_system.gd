@@ -81,24 +81,26 @@ func cache_navigation_map() -> void:
 # 좌표 변환 함수 (TileMapLayer 기준)
 # ============================================================
 
-## 그리드 좌표 → 월드 좌표 변환
-## TileMapLayer.map_to_local()을 사용하여 정확한 좌표 계산
+## 그리드 좌표 → 월드 좌표 변환 (글로벌 좌표 반환)
+## TileMapLayer.map_to_local()로 로컬 좌표를 얻은 후 글로벌로 변환
 func grid_to_world(grid_pos: Vector2i) -> Vector2:
 	if not ground_layer:
 		push_error("[GridSystem] ground_layer가 초기화되지 않았습니다! initialize()를 먼저 호출하세요.")
 		return Vector2.ZERO
 
-	return ground_layer.map_to_local(grid_pos)
+	var local_pos: Vector2 = ground_layer.map_to_local(grid_pos)
+	return ground_layer.to_global(local_pos)
 
 
-## 월드 좌표 → 그리드 좌표 변환
-## TileMapLayer.local_to_map()을 사용하여 정확한 좌표 계산
+## 월드 좌표 → 그리드 좌표 변환 (글로벌 좌표 입력)
+## 글로벌 좌표를 로컬로 변환 후 TileMapLayer.local_to_map() 호출
 func world_to_grid(world_pos: Vector2) -> Vector2i:
 	if not ground_layer:
 		push_error("[GridSystem] ground_layer가 초기화되지 않았습니다! initialize()를 먼저 호출하세요.")
 		return Vector2i.ZERO
 
-	return ground_layer.local_to_map(world_pos)
+	var local_pos: Vector2 = ground_layer.to_local(world_pos)
+	return ground_layer.local_to_map(local_pos)
 
 
 # ============================================================

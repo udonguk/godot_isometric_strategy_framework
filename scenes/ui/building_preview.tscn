@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3 uid="uid://dkp7xm2v8n5ry"]
+
+[ext_resource type="Script" uid="uid://bqxhv3k8m2p4t" path="res://scripts/ui/building_preview.gd" id="1_preview"]
+
+[node name="BuildingPreview" type="Node2D"]
+z_index = 100
+script = ExtResource("1_preview")
+
+[node name="GridOverlay" type="Polygon2D" parent="."]
+color = Color(0, 1, 0, 0.3)
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0, 1, 0, 0.5)
+position = Vector2(0, -8)
+
+[node name="DebugLabel" type="Label" parent="."]
+offset_left = -150.0
+offset_top = -80.0
+offset_right = 150.0
+offset_bottom = -20.0
+horizontal_alignment = 1

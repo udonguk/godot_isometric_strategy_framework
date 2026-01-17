@@ -87,6 +87,45 @@ signal building_placement_failed(reason: String)
 - [ ] 마우스 커서를 따라다니는 건물 스프라이트
 - [ ] 건설 가능/불가 색상 표시 (녹색/빨간색)
 
+##### 구현 계획
+
+**활용할 기존 인프라:**
+- `BuildingManager.is_placement_mode` - 건설 모드 상태
+- `BuildingManager.selected_building_data` - 선택된 건물 데이터
+- `BuildingManager.can_build_at()` - 건설 가능 여부 검증
+- `GridSystem.world_to_grid()` / `grid_to_world()` - 좌표 변환
+- `building_placement_started` 시그널 - 건설 모드 시작 이벤트
+
+**구현 방식:** BuildingPreview 별도 씬/스크립트 생성 (단일 책임 원칙)
+
+##### 세부 TODO
+
+- [x] **3.3.1. BuildingPreview 씬 생성**
+  - 파일: `scenes/ui/building_preview.tscn`
+  - 구조: Node2D > Sprite2D (반투명 미리보기용)
+  - z_index 설정으로 다른 엔티티 위에 표시
+
+- [x] **3.3.2. BuildingPreview.gd 스크립트 작성**
+  - 파일: `scripts/ui/building_preview.gd`
+  - `_process()`: 마우스 위치 추적 + 그리드 스냅
+  - `show_preview(building_data)`: 미리보기 시작 + 텍스처 설정
+  - `hide_preview()`: 미리보기 숨김
+  - `_update_validity_color()`: `can_build_at()` 결과로 색상 변경
+    - 건설 가능: 녹색 반투명 (`Color(0, 1, 0, 0.5)`)
+    - 건설 불가: 빨간색 반투명 (`Color(1, 0, 0, 0.5)`)
+
+- [x] **3.3.3. BuildingManager 연동**
+  - `start_building_placement()`: 미리보기 생성/표시
+  - `cancel_building_placement()`: 미리보기 숨김
+  - `try_place_building()`: 배치 성공 시 미리보기 숨김
+  - BuildingPreview 인스턴스 참조 추가
+
+- [ ] **3.3.4. 통합 테스트**
+  - 건설 모드 진입 시 미리보기 표시 확인
+  - 마우스 이동 시 그리드 스냅 확인
+  - 건설 가능/불가 위치에서 색상 변경 확인
+  - ESC 취소 및 배치 완료 시 미리보기 숨김 확인
+
 ---
 
 ### Phase 4: UI ↔ 로직 연결
@@ -120,26 +159,26 @@ signal building_placement_failed(reason: String)
 ### Phase 5: 통합 테스트
 
 #### 5.1. 테스트 시나리오
-- [ ] **시나리오 1: 정상 건설**
+- [x] **시나리오 1: 정상 건설**
   1. UI에서 "주택" 버튼 클릭
   2. 맵의 빈 공간 클릭
   3. 건물이 배치되고 Navigation 장애물로 등록됨
   4. Navigation bake 확인 (유닛이 건물 피해감)
 
-- [ ] **시나리오 2: 건설 실패 (위치 중복)**
+- [x] **시나리오 2: 건설 실패 (위치 중복)**
   1. 이미 건물이 있는 위치 클릭
   2. "이미 건물이 존재합니다" 메시지 출력
   3. 건물이 배치되지 않음
 
-- [ ] **시나리오 3: 건설 취소**
+- [x] **시나리오 3: 건설 취소**
   1. 건설 모드 진입
   2. ESC 키 또는 취소 버튼 클릭
   3. 건설 모드 종료
 
 #### 5.2. Navigation 테스트
-- [ ] 건물 배치 후 Navigation 장애물 등록 확인
-- [ ] 유닛(또는 테스트 객체)이 건물을 피해서 이동하는지 확인
-- [ ] 건물 제거 시 Navigation 장애물 해제 확인
+- [x] 건물 배치 후 Navigation 장애물 등록 확인
+- [x] 유닛(또는 테스트 객체)이 건물을 피해서 이동하는지 확인
+- [x] 건물 제거 시 Navigation 장애물 해제 확인
 
 ---
 
