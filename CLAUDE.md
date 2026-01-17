@@ -31,49 +31,89 @@ Godot 프로젝트는 전통적인 빌드/테스트 명령어가 없으며, Godo
 
 ```
 isometric-strategy-framework/
-├── docs/            # 기획 및 디자인 문서 (5개 폴더 구조)
-│   ├── product/     # 제품 기획 (game_design, prd)
-│   ├── project/     # 프로젝트 관리 (backlog, sprints, architecture)
-│   ├── design/      # 기술 설계 (시스템별 설계 문서)
-│   │   └── tile_system_design.md  # 타일 시스템 설계 (UI/Logic 분리 원칙 포함)
-│   ├── implementation/ # 구현 가이드 (code_convention, phase guides)
-│   │   └── testing_guide.md       # 테스트 작성 가이드 (GUT 사용법)
-│   └── maintenance/ # 유지보수 (errors, troubleshooting, migration)
-│       └── archive/ # 폐기 문서 보관
-├── scenes/          # Godot 씬 파일들 (소스코드)
-│   ├── tiles/       # 타일 시스템 (TileSet + TileMapLayer 한 쌍으로 관리)
-│   │   ├── ground_tileset.tres       # TileSet 리소스
-│   │   └── ground_tilemaplayer.tscn  # TileMapLayer 씬 (Navigation 설정 포함)
-│   ├── entity/      # 맵 위에 배치되는 모든 엔티티
-│   │   ├── building_entity.tscn      # 건물 엔티티
-│   │   └── tree_entity.tscn          # 나무 엔티티 (예정)
-│   ├── camera/      # 카메라 시스템
-│   ├── maps/        # 맵 씬들
-│   └── main.tscn    # 메인 씬
-├── scripts/         # GDScript 파일들 (소스코드)
-│   ├── config/      # 게임 설정
-│   ├── entity/      # 엔티티 로직
-│   │   ├── base_entity.gd            # 공통 엔티티 로직 (예정)
-│   │   └── building_entity.gd        # 건물 전용 로직 (예정)
-│   ├── camera/      # 카메라 로직
-│   ├── map/         # 맵/그리드 시스템
+├── docs/                # 기획 및 디자인 문서 (5개 폴더 구조)
+│   ├── product/         # 제품 기획
+│   │   ├── game_design.md
+│   │   └── prd.md
+│   ├── project/         # 프로젝트 관리
+│   │   ├── backlog.md
+│   │   ├── framework_architecture.md
+│   │   └── sprints/     # 스프린트 문서
+│   │       └── completed/  # 완료된 스프린트
+│   ├── design/          # 기술 설계
+│   │   ├── tile_system_design.md
+│   │   ├── building_construction_system_design.md
+│   │   ├── navigation_system_design.md
+│   │   ├── input_system_design.md
+│   │   ├── ui_system_design.md
+│   │   └── resource_based_entity_design.md
+│   ├── implementation/  # 구현 가이드
+│   │   ├── architecture_guidelines.md
+│   │   ├── coding_style.md
+│   │   ├── testing_guide.md
+│   │   └── godot_autoload_guidelines.md
+│   └── maintenance/     # 유지보수
+│       └── archive/     # 폐기 문서 보관
+├── scenes/              # Godot 씬 파일들
+│   ├── tiles/           # 타일 시스템
+│   │   ├── ground_tileset.tres
+│   │   ├── ground_tilemaplayer.tscn
+│   │   └── structures_tilemaplayer.tscn
+│   ├── entitys/         # 맵 위에 배치되는 엔티티
+│   │   ├── building_entity.tscn
+│   │   └── unit_entity.tscn
+│   ├── ui/              # UI 씬들
+│   │   ├── building_preview.tscn
+│   │   └── construction_menu.tscn
+│   ├── camera/          # 카메라 시스템
+│   │   └── rts_camera_2d.tscn
+│   ├── maps/            # 맵 씬들
+│   │   └── test_map.tscn
+│   └── main.tscn        # 메인 씬
+├── scripts/             # GDScript 파일들
+│   ├── config/          # 게임 설정
+│   │   ├── game_config.gd
+│   │   └── building_database.gd
+│   ├── entity/          # 엔티티 로직
+│   │   ├── building_entity.gd
+│   │   └── unit_entity.gd
+│   ├── managers/        # 게임 매니저들 (Autoload)
+│   │   ├── building_manager.gd
+│   │   ├── input_manager.gd
+│   │   └── selection_manager.gd
+│   ├── resources/       # 리소스 데이터 클래스
+│   │   ├── building_data.gd
+│   │   ├── entity_data.gd
+│   │   └── *.tres        # 건물 데이터 리소스들
+│   ├── ui/              # UI 스크립트
+│   │   ├── building_preview.gd
+│   │   └── construction_menu.gd
+│   ├── camera/          # 카메라 로직
+│   │   └── rts_camera_2d.gd
+│   ├── map/             # 맵/그리드 시스템
+│   │   └── grid_system.gd
+│   ├── maps/            # 맵별 스크립트
+│   │   └── test_map.gd
 │   └── main.gd
-├── tests/           # 테스트 파일 (GUT 프레임워크)
-│   ├── unit/        # 단위 테스트
-│   │   ├── test_grid_system.gd       # GridSystem 테스트
-│   │   └── test_building_manager.gd  # BuildingManager 테스트
-│   ├── integration/ # 통합 테스트
-│   └── README.md    # 테스트 실행 가이드
-├── assets/          # 정적 자료 (이미지만)
+├── tests/               # 테스트 파일 (GUT 프레임워크)
+│   ├── unit/            # 단위 테스트
+│   │   ├── test_grid_system.gd
+│   │   └── test_building_manager.gd
+│   ├── integration/     # 통합 테스트
+│   └── README.md
+├── assets/              # 정적 자료
+│   ├── shaders/         # 셰이더 파일
+│   │   └── outline.gdshader
 │   └── sprites/
-│       ├── tiles/           # 타일 스프라이트
-│       └── entity/          # 엔티티 스프라이트 (건물, 나무 등)
-├── addons/          # Godot 플러그인
-│   └── gut/         # GUT (Godot Unit Test) 프레임워크
-├── .gutconfig.json  # GUT 설정 파일
-├── icon.svg         # 프로젝트 아이콘
-├── project.godot    # Godot 프로젝트 설정
-└── .godot/          # Godot 에디터 캐시 및 메타데이터 (git 무시)
+│       ├── tiles/       # 타일 스프라이트
+│       └── entity/      # 엔티티 스프라이트
+│           └── unit/    # 유닛 스프라이트시트
+├── addons/              # Godot 플러그인
+│   └── gut/             # GUT (Godot Unit Test)
+├── .gutconfig.json      # GUT 설정 파일
+├── icon.svg             # 프로젝트 아이콘
+├── project.godot        # Godot 프로젝트 설정
+└── .godot/              # Godot 에디터 캐시 (git 무시)
 ```
 
 ## 아키텍처 노트
