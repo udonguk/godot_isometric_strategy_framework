@@ -9,26 +9,26 @@
 - [x] **Task 1.2**: `GridSystem.is_valid_navigation_position()` 구현
 - [x] **Task 1.3**: `GridSystem.mark_as_obstacle()` 구현
 
-### Phase 2: 유닛 시스템
+### Phase 2: 유닛 시스템 ✅ 완료
 - [x] **Task 2.1**: `UnitEntity` 씬 생성 (CharacterBody2D + NavigationAgent2D)
 - [x] **Task 2.2**: `unit_entity.gd` 기본 이동 로직 구현
 - [x] **Task 2.3**: SelectionIndicator 비주얼 추가
 - [x] **Task 2.4**: `test_map.tscn`에 테스트 유닛 배치
 
-### Phase 3: 선택 시스템
-- [ ] **Task 3.1**: `SelectionManager` Autoload 생성
-- [ ] **Task 3.2**: 유닛 클릭 선택 구현
-- [ ] **Task 3.3**: Ctrl+클릭 다중 선택 구현
+### Phase 3: 선택 시스템 ✅ 완료
+- [x] **Task 3.1**: `SelectionManager` Autoload 생성
+- [x] **Task 3.2**: 유닛 클릭 선택 구현 (`InputManager._on_unit_clicked()`)
+- [x] **Task 3.3**: Ctrl+클릭 다중 선택 구현
 
-### Phase 4: 이동 명령
-- [ ] **Task 4.1**: `main.gd`에 우클릭 이동 구현
-- [ ] **Task 4.2**: GridSystem 좌표 검증 통합
-- [ ] **Task 4.3**: 에러 처리 (도달 불가능한 위치)
+### Phase 4: 이동 명령 ✅ 완료
+- [x] **Task 4.1**: `InputManager._handle_right_click()`에 우클릭 이동 구현
+- [x] **Task 4.2**: GridSystem 좌표 검증 통합
+- [x] **Task 4.3**: 에러 처리 (도달 불가능한 위치)
 
-### Phase 5: 건물 통합
-- [ ] **Task 5.1**: `BuildingEntity`에 NavigationObstacle2D 추가
-- [ ] **Task 5.2**: `BuildingManager.create_building()` 수정 (장애물 등록)
-- [ ] **Task 5.3**: 건물 주변 내비게이션 검증
+### Phase 5: 건물 통합 ✅ 완료
+- [x] **Task 5.1**: `BuildingEntity`에 StaticBody2D 추가 (NavigationRegion2D bake 방식 사용)
+- [x] **Task 5.2**: `BuildingManager.create_building()` 수정 (`_bake_navigation_async()` 자동 호출)
+- [x] **Task 5.3**: 건물 주변 내비게이션 검증 (NavigationRegion2D parsed_collision_mask로 StaticBody2D 감지)
 
 ### Phase 6: 최적화 및 테스트
 - [ ] **Task 6.1**: Stuck Detection 구현

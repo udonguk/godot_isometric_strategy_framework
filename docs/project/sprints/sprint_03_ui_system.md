@@ -1,19 +1,19 @@
 # Sprint 03: UI 시스템 구현
 
-**관련 설계 문서:** 
+**관련 설계 문서:**
 - `../../design/ui_system_design.md`
 - `../../design/construction_menu_ui_redesign.md`
 
 ## 🗓️ 전체 구현 로드맵
 
-### Week 1: 최소 UI (즉시 테스트 가능)
+### Week 1: 최소 UI (즉시 테스트 가능) ✅ 완료
 
 **Day 1-2: 건설 메뉴 (Phase 1)**
-- [ ] SimpleConstructionMenu.tscn 생성
-- [ ] 버튼 3개 (주택, 농장, 상점)
-- [ ] ConstructionManager 간단 버전
-- [ ] B 키로 열기/닫기
-- [ ] 테스트: 건물 배치 성공
+- [x] ConstructionMenu.tscn 생성 (하단 바 방식)
+- [x] 버튼 3개 (주택, 농장, 상점)
+- [x] BuildingManager와 연동 (의존성 주입)
+- [x] 펼침/접기 버튼으로 동작 (B 키 대체)
+- [x] 테스트: 건물 배치 성공
 
 **Day 3-4: 기본 HUD**
 - [ ] HUD.tscn 생성
@@ -22,18 +22,18 @@
 
 ---
 
-### Week 2: Resource 통합
+### Week 2: Resource 통합 ✅ 완료
 
 **Day 5-7: Resource 시스템**
-- [ ] EntityData.gd, BuildingData.gd 작성
-- [ ] house_01.tres, farm_01.tres, shop_01.tres 생성
-- [ ] BuildingDatabase.gd 작성
+- [x] EntityData.gd, BuildingData.gd 작성
+- [x] house_01.tres, farm_01.tres, shop_01.tres 생성
+- [x] BuildingDatabase.gd 작성 (Autoload)
 
 **Day 8-10: 건설 메뉴 (Phase 2)**
-- [ ] ConstructionMenu.tscn (동적 버전)
-- [ ] BuildingButton.tscn 프리팹
-- [ ] populate_buildings() 구현
-- [ ] 테스트: Resource 기반 동작 확인
+- [x] ConstructionMenu.tscn (동적 버전 - BuildingDatabase 연동)
+- [x] 건물 버튼 (씬 내 정의, 별도 프리팹 없음)
+- [x] BuildingDatabase.get_building_by_id() 사용
+- [x] 테스트: Resource 기반 동작 확인
 
 ---
 
@@ -68,21 +68,21 @@
 
 ## ✅ 상세 체크리스트
 
-### Phase 1: 최소 UI (30분)
-- [ ] SimpleConstructionMenu.tscn 생성
-- [ ] 버튼 3개 추가
-- [ ] ConstructionManager 간단 버전
-- [ ] B 키로 열기/닫기 동작
-- [ ] 건물 배치 테스트 성공
+### Phase 1: 최소 UI ✅ 완료
+- [x] ConstructionMenu.tscn 생성 (하단 바 재설계 적용)
+- [x] 버튼 3개 추가 (HouseButton, FarmButton, ShopButton)
+- [x] BuildingManager 연동 (시그널 기반)
+- [x] 펼침/접기 버튼 동작
+- [x] 건물 배치 테스트 성공
 
-### Phase 2: Resource 통합 (2시간)
-- [ ] BuildingData.gd 작성
-- [ ] .tres 파일 3개 생성
-- [ ] ConstructionMenu 동적 버전
-- [ ] BuildingButton 프리팹
-- [ ] Resource 기반 동작 확인
+### Phase 2: Resource 통합 ✅ 완료
+- [x] EntityData.gd, BuildingData.gd 작성
+- [x] .tres 파일 3개 생성 (house_01, farm_01, shop_01)
+- [x] ConstructionMenu 동적 버전 (BuildingDatabase 연동)
+- [x] 건물 버튼 (씬 내 정의)
+- [x] Resource 기반 동작 확인
 
-### Phase 3: 추가 UI (4시간)
+### Phase 3: 추가 UI
 - [ ] HUD 생성 및 표시
 - [ ] BuildingInfoPanel 생성
 - [ ] Minimap 생성
@@ -90,68 +90,45 @@
 
 ---
 
-## 🔧 건설 메뉴 하단 바 재설계 구현 단계 (Redesign)
+## 🔧 건설 메뉴 하단 바 재설계 구현 단계 (Redesign) ✅ 완료
 
-### Step 1: 노드 구조 생성 (Godot 에디터)
+### Step 1: 노드 구조 생성 (Godot 에디터) ✅ 완료
 
-**기존 구조 삭제:**
-1. `construction_menu.tscn` 열기
-2. 기존 Panel 노드 삭제
-
-**새 구조 추가:**
+**구현된 구조:**
 
 ```
-1. ConstructionMenu (Control)
-   - Layout: Full Rect
-
-2. CollapsedBar (Panel) 추가
-   - Layout: Bottom
-   - Anchor: Left=0, Right=1, Top=1, Bottom=1
-   - Offset: Top=-50, Bottom=0
-   - 크기: 자동 (화면 너비 x 50)
-
-3. ExpandButton (Button) 추가 (CollapsedBar 자식)
-   - Text: "건설 ▲"
-   - Size: (120, 50)
-   - Alignment: Left
-
-4. ExpandedPanel (Panel) 추가
-   - Layout: Bottom
-   - Anchor: Left=0, Right=1, Top=1, Bottom=1
-   - Offset: Top=-200, Bottom=0
-   - Visible: false
-
-5. Header (HBoxContainer) 추가 (ExpandedPanel 자식)
-   - Size: (화면 너비, 40)
-
-6. TitleLabel (Label) + CollapseButton (Button) 추가
-
-7. Content (VBoxContainer) 추가
-
-8. ScrollContainer (ScrollContainer) 추가
-   - Horizontal Enabled: true
-   - Vertical Enabled: false
-
-9. BuildingList (HBoxContainer) 추가
-   - Separation: 10
-
-10. 건물 버튼 4개 추가 (HouseButton, FarmButton, etc.)
-    - Custom Minimum Size: (100, 120)
+✅ ConstructionMenu (Control) - Full Rect
+   ├── ✅ CollapsedBar (Panel) - 하단 고정, 높이 50
+   │   └── ✅ ExpandButton (Button) - "건설 ▲"
+   └── ✅ ExpandedPanel (Panel) - 하단 고정, 높이 200, 초기 숨김
+       ├── ✅ Header (HBoxContainer)
+       │   ├── ✅ TitleLabel (Label) - "건설 메뉴"
+       │   └── ✅ CollapseButton (Button) - "▼ 접기"
+       └── ✅ Content (VBoxContainer)
+           └── ✅ ScrollContainer (가로 스크롤)
+               └── ✅ BuildingList (HBoxContainer, separation=10)
+                   ├── ✅ HouseButton (100x60)
+                   ├── ✅ FarmButton (100x60)
+                   └── ✅ ShopButton (100x60)
 ```
 
-### Step 2: 스크립트 작성
-- `scripts/ui/construction_menu.gd` 작성 (설계 문서 참조)
+### Step 2: 스크립트 작성 ✅ 완료
+- [x] `scripts/ui/construction_menu.gd` 작성
+- [x] BuildingManager 의존성 주입
+- [x] 시그널 연결 (placement_started, placed, failed)
+- [x] ESC 키로 건설 취소
 
-### Step 3: 버튼 디자인
-- BuildingButton (VBoxContainer 사용) 구조 생성
+### Step 3: 버튼 디자인 ✅ 완료
+- [x] 건물 버튼 3개 (씬 내 정의)
+- [x] BuildingDatabase 연동
 
-### Step 4: 테스트
-- [ ] 접힌 바가 화면 하단에 보임
-- [ ] "건설 ▲" 클릭 → 메뉴 펼쳐짐
-- [ ] "▼ 접기" 클릭 → 메뉴 접힘
-- [ ] 건물 선택 후에도 메뉴 유지
-- [ ] 가로 스크롤 동작
-- [ ] B 키 입력 코드 제거됨
+### Step 4: 테스트 ✅ 완료
+- [x] 접힌 바가 화면 하단에 보임
+- [x] "건설 ▲" 클릭 → 메뉴 펼쳐짐
+- [x] "▼ 접기" 클릭 → 메뉴 접힘
+- [x] 건물 선택 후에도 메뉴 유지
+- [x] 가로 스크롤 동작
+- [x] B 키 입력 코드 제거됨
 
 ### 모바일 테스트
 - [ ] 터치로 펼침/접기 동작
@@ -160,3 +137,13 @@
 - [ ] 세로 모드에서 정상 표시
 - [ ] 가로 모드에서 정상 표시
 - [ ] 다양한 해상도에서 버튼 크기 적절
+
+---
+
+## 🎯 추가 구현: 건물 배치 미리보기 ✅ 완료
+
+- [x] `building_preview.tscn` / `building_preview.gd` 생성
+- [x] 그리드 스냅 동작
+- [x] 건설 가능/불가 색상 표시 (녹색/빨간색)
+- [x] 개별 타일 오버레이 (NxM 건물 지원)
+- [x] BuildingManager와 연동
