@@ -29,9 +29,7 @@ var selected_building: BuildingEntity = null
 ## @param unit: 선택할 유닛
 ## @param multi_select: true면 기존 유닛 선택 유지, false면 기존 유닛 선택 해제
 func select_unit(unit: UnitEntity, multi_select: bool = false) -> void:
-	if not unit:
-		push_warning("[SelectionManager] null 유닛을 선택하려고 시도했습니다.")
-		return
+	assert(unit != null, "[SelectionManager] unit은 null일 수 없습니다")
 
 	# 다중 선택이 아니면 기존 유닛 선택 해제
 	if not multi_select:
@@ -89,9 +87,7 @@ func has_selected_units() -> bool:
 
 ## 건물 선택 (단일 선택만)
 func select_building(building: BuildingEntity) -> void:
-	if not building:
-		push_warning("[SelectionManager] null 건물을 선택하려고 시도했습니다.")
-		return
+	assert(building != null, "[SelectionManager] building은 null일 수 없습니다")
 
 	# 기존 건물 선택 해제
 	if selected_building and selected_building != building:

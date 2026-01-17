@@ -97,9 +97,7 @@ func initialize(new_data: BuildingData) -> void:
 ## 뷰를 데이터에 맞게 갱신하는 내부 함수
 ## @param building_data: 비주얼 업데이트에 사용할 BuildingData (명시적 의존성)
 func _update_visuals(building_data: BuildingData) -> void:
-	if not building_data:
-		push_warning("BuildingEntity: 데이터가 없습니다!")
-		return
+	assert(building_data != null, "[BuildingEntity] building_data는 null일 수 없습니다")
 
 	# 텍스처 설정
 	if building_data.sprite_texture:

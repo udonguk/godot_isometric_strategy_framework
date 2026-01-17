@@ -23,8 +23,6 @@ func _ready() -> void:
 	await test_map.initialize_async()
 
 	# ConstructionMenu 초기화 (BuildingManager Autoload 직접 전달)
-	if construction_menu:
-		construction_menu.initialize(BuildingManager)
-		print("[Main] ConstructionMenu 초기화 완료")
-	else:
-		push_error("[Main] ConstructionMenu를 찾을 수 없습니다")
+	assert(construction_menu != null, "[Main] ConstructionMenu 노드가 씬에 없습니다")
+	construction_menu.initialize(BuildingManager)
+	print("[Main] ConstructionMenu 초기화 완료")

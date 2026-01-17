@@ -118,8 +118,7 @@ func initialize(parent_node: Node2D, grid_system: GridSystemNode = null, nav_reg
 ## @return: {success: bool, reason: String}
 func can_build_at(building_data: BuildingData, grid_pos: Vector2i) -> Dictionary:
 	# 1. building_data 유효성 확인
-	if not building_data:
-		return {"success": false, "reason": "건물 데이터가 없습니다"}
+	assert(building_data != null, "[BuildingManager] building_data는 null일 수 없습니다")
 
 	# 2. 건물 크기 가져오기
 	var grid_size: Vector2i = building_data.grid_size
@@ -145,9 +144,7 @@ func can_build_at(building_data: BuildingData, grid_pos: Vector2i) -> Dictionary
 ## 반환값: 생성된 BuildingEntity 인스턴스 (실패 시 null)
 func create_building(grid_pos: Vector2i, building_data: BuildingData = null) -> Node2D:
 	# 1. 부모 노드가 설정되지 않았으면 에러
-	if not buildings_parent:
-		push_error("[BuildingManager] 부모 노드가 설정되지 않았습니다. initialize()를 먼저 호출하세요.")
-		return null
+	assert(buildings_parent != null, "[BuildingManager] initialize()를 먼저 호출하세요")
 
 	# 2. building_data가 있으면 can_build_at()로 사전 검증
 	if building_data:
