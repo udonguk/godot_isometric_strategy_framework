@@ -126,7 +126,7 @@ static func get_manhattan_distance(pos1: Vector2i, pos2: Vector2i) -> int:
 ##   (1, 0) → (16, -8)
 ##   (0, 1) → (16, 8)
 ##   (1, 1) → (32, 0)
-static func grid_offset_to_screen(grid_offset: Vector2i) -> Vector2:
+func grid_offset_to_screen(grid_offset: Vector2i) -> Vector2:
 	var half_w: float = GameConfig.HALF_TILE_WIDTH
 	var half_h: float = GameConfig.HALF_TILE_HEIGHT
 	var offset_x: float = grid_offset.x * half_w + grid_offset.y * half_w

@@ -202,7 +202,7 @@ func _update_grid_overlay(grid_size: Vector2i) -> void:
 			tile_overlay.polygon = single_tile_polygon
 
 			# GridSystem 공통 함수로 화면 오프셋 계산
-			tile_overlay.position = GridSystemNode.grid_offset_to_screen(Vector2i(x, y))
+			tile_overlay.position = GridSystem.grid_offset_to_screen(Vector2i(x, y))
 
 			# 이름으로 좌표 저장 (나중에 색상 업데이트 시 사용)
 			tile_overlay.name = "Tile_%d_%d" % [x, y]
