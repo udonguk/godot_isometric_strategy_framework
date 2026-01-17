@@ -115,3 +115,37 @@ func _update_visuals(building_data: BuildingData) -> void:
 			print("[BuildingEntity] 스프라이트 오프셋 적용: ", building_data.sprite_offset)
 	else:
 		push_warning("BuildingData에 텍스처가 설정되지 않았습니다: %s" % building_data.entity_name)
+
+	# Collision Polygon 업데이트 (grid_size 반영)
+	_update_collision_polygon(building_data.grid_size)
+
+
+## grid_size에 맞게 Collision Polygon 동적 생성
+## 아이소메트릭 다이아몬드 형태로 NxM 타일 영역을 커버
+##
+## @param grid_size: 건물이 차지하는 타일 수 (예: Vector2i(2, 2))
+func _update_collision_polygon(grid_size: Vector2i) -> void:
+	# 아이소메트릭 타일 반크기 (TILE_SIZE = 32x32 기준)
+	var half_w: float = 16.0  # 타일 가로 반
+	var half_h: float = 8.0   # 아이소메트릭 세로 반 (가로의 절반)
+
+	var w: int = grid_size.x
+	var h: int = grid_size.y
+
+	# NxM 건물의 외곽 다이아몬드 꼭짓점 계산
+	var top = Vector2(0, -half_h)
+	var right = Vector2(w * half_w, (w - 1) * half_h)
+	var bottom = Vector2((w - h) * half_w, (w + h - 1) * half_h)
+	var left = Vector2(-h * half_w, (h - 1) * half_h)
+
+	var polygon = PackedVector2Array([right, bottom, left, top])
+
+	# Area2D의 CollisionPolygon2D 업데이트
+	if has_node("Area2D/CollisionPolygon2D"):
+		$Area2D/CollisionPolygon2D.polygon = polygon
+
+	# StaticBody2D의 CollisionPolygon2D 업데이트 (Navigation 장애물용)
+	if has_node("StaticBody2D/CollisionPolygon2D"):
+		$StaticBody2D/CollisionPolygon2D.polygon = polygon
+
+	print("[BuildingEntity] Collision Polygon 업데이트: grid_size=", grid_size, " → ", polygon)
