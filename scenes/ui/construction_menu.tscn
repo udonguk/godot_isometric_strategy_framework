@@ -28,6 +28,20 @@ offset_right = 120.0
 offset_bottom = 50.0
 text = "건설 ▲"
 
+[node name="SaveButton" type="Button" parent="CollapsedBar"]
+layout_mode = 0
+offset_left = 130.0
+offset_right = 210.0
+offset_bottom = 50.0
+text = "저장"
+
+[node name="LoadButton" type="Button" parent="CollapsedBar"]
+layout_mode = 0
+offset_left = 220.0
+offset_right = 300.0
+offset_bottom = 50.0
+text = "로드"
+
 [node name="ExpandedPanel" type="Panel" parent="."]
 visible = false
 layout_mode = 1

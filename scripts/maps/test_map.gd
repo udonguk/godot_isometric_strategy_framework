@@ -131,7 +131,10 @@ func _initialize_systems() -> void:
 	# 5단계: 기존 건물 동기화 (GridSystem을 통해 structures_layer 조회)
 	BuildingManager.sync_existing_structures()
 
-	# 6단계: 건설 미리보기 설정
+	# 6단계: SaveManager 초기화 (유닛 부모 노드 전달)
+	SaveManager.initialize(entities_container)
+
+	# 7단계: 건설 미리보기 설정
 	_setup_building_preview()
 
 

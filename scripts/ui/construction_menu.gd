@@ -21,6 +21,8 @@ signal expansion_state_changed(expanded: bool)
 @onready var expanded_panel: Panel = $ExpandedPanel
 @onready var expand_button: Button = $CollapsedBar/ExpandButton
 @onready var collapse_button: Button = $ExpandedPanel/Header/CollapseButton
+@onready var save_button: Button = $CollapsedBar/SaveButton
+@onready var load_button: Button = $CollapsedBar/LoadButton
 
 @onready var house_button: Button = $ExpandedPanel/Content/ScrollContainer/BuildingList/HouseButton
 @onready var farm_button: Button = $ExpandedPanel/Content/ScrollContainer/BuildingList/FarmButton
@@ -55,6 +57,8 @@ func _ready():
 	# 시그널 연결
 	expand_button.pressed.connect(_on_expand_button_pressed)
 	collapse_button.pressed.connect(_on_collapse_button_pressed)
+	save_button.pressed.connect(_on_save_button_pressed)
+	load_button.pressed.connect(_on_load_button_pressed)
 
 	house_button.pressed.connect(_on_house_button_pressed)
 	farm_button.pressed.connect(_on_farm_button_pressed)
@@ -126,6 +130,20 @@ func _on_expand_button_pressed() -> void:
 ## 접기 버튼 클릭 시 호출
 func _on_collapse_button_pressed() -> void:
 	set_expansion_state(false)
+
+
+## 저장 버튼 클릭 시 호출
+func _on_save_button_pressed() -> void:
+	print("[ConstructionMenu] 저장 버튼 클릭")
+	SaveManager.quick_save()
+	get_viewport().set_input_as_handled()
+
+
+## 로드 버튼 클릭 시 호출
+func _on_load_button_pressed() -> void:
+	print("[ConstructionMenu] 로드 버튼 클릭")
+	SaveManager.quick_load()
+	get_viewport().set_input_as_handled()
 
 
 # ============================================================

@@ -64,6 +64,9 @@ var is_selected: bool = false:
 # ============================================================
 
 func _ready():
+	# 그룹 등록 (SaveManager에서 유닛 조회용)
+	add_to_group("units")
+
 	# NavigationAgent2D 설정
 	nav_agent.path_desired_distance = 4.0
 	nav_agent.target_desired_distance = 4.0

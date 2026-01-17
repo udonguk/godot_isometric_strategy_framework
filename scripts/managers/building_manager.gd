@@ -55,6 +55,10 @@ var buildings_parent: Node2D = null
 ## NavigationRegion2D 참조 (건물 배치 시 자동 bake용)
 var navigation_region: NavigationRegion2D = null
 
+## Navigation baking 상태 플래그 (중복 호출 방지)
+var _is_navigation_baking: bool = false
+var _navigation_bake_pending: bool = false
+
 
 # ============================================================
 # 건설 모드 상태
@@ -179,8 +183,9 @@ func can_build_at(building_data: BuildingData, grid_pos: Vector2i) -> Dictionary
 ## 특정 그리드 위치에 건물 생성
 ## grid_pos: 그리드 좌표
 ## building_data: (선택) BuildingData Resource - 제공 시 initialize() 호출
+## skip_navigation_bake: (선택) true면 Navigation bake 건너뜀 (대량 생성 시 사용)
 ## 반환값: 생성된 BuildingEntity 인스턴스 (실패 시 null)
-func create_building(grid_pos: Vector2i, building_data: BuildingData = null) -> Node2D:
+func create_building(grid_pos: Vector2i, building_data: BuildingData = null, skip_navigation_bake: bool = false) -> Node2D:
 	# 1. 부모 노드가 설정되지 않았으면 에러
 	assert(buildings_parent != null, "[BuildingManager] initialize()를 먼저 호출하세요")
 
@@ -232,7 +237,8 @@ func create_building(grid_pos: Vector2i, building_data: BuildingData = null) -> 
 		print("[BuildingManager] 건물 생성: Grid ", grid_pos, " → World ", world_pos)
 
 	# 9. ⭐ Navigation 자동 bake (건물이 장애물로 등록됨)
-	_bake_navigation_async()
+	if not skip_navigation_bake:
+		_bake_navigation_async()
 
 	return building
 
@@ -431,16 +437,121 @@ func clear_all_buildings() -> void:
 ##
 ## NavigationRegion2D가 Static Colliders 방식으로 장애물을 감지하므로
 ## 건물의 StaticBody2D가 씬 트리에 추가된 후 bake해야 함
+##
+## 중복 호출 방지: baking 중이면 pending 플래그만 설정하고 건너뜀
 func _bake_navigation_async() -> void:
 	if not navigation_region:
 		return  # NavigationRegion2D가 없으면 skip
 
+	# 이미 baking 중이면 pending 플래그 설정하고 건너뜀
+	if _is_navigation_baking:
+		_navigation_bake_pending = true
+		return
+
+	_is_navigation_baking = true
+
+	# bake_finished 시그널 연결 (일회성)
+	if not navigation_region.bake_finished.is_connected(_on_navigation_bake_finished):
+		navigation_region.bake_finished.connect(_on_navigation_bake_finished)
+
 	# StaticBody2D가 물리 서버에 등록될 때까지 1 프레임 대기
 	await get_tree().physics_frame
 
-	# Navigation Mesh 갱신
+	# Navigation Mesh 갱신 (비동기 - bake_finished 시그널로 완료 감지)
 	navigation_region.bake_navigation_polygon()
-	print("[BuildingManager] Navigation 자동 bake 완료")
+	print("[BuildingManager] Navigation bake 시작...")
+
+
+## Navigation bake 완료 콜백
+func _on_navigation_bake_finished() -> void:
+	print("[BuildingManager] Navigation bake 완료")
+	_is_navigation_baking = false
+
+	# pending 요청이 있으면 다시 bake
+	if _navigation_bake_pending:
+		_navigation_bake_pending = false
+		_bake_navigation_async()
+
+
+# ============================================================
+# 직렬화 (Serialization) - 저장/로드용
+# ============================================================
+
+## 건물 데이터를 직렬화 (저장용)
+##
+## @return: {"buildings": [{type, grid_pos}, ...]} 형태의 Dictionary
+func serialize() -> Dictionary:
+	var buildings_data: Array = []
+
+	# grid_buildings에서 고유한 건물만 추출 (여러 타일을 차지하는 건물 중복 방지)
+	var processed_buildings: Array = []
+
+	for grid_pos in grid_buildings.keys():
+		var building = grid_buildings[grid_pos]
+
+		# null 체크 (기존 타일 동기화된 것은 skip)
+		if building == null:
+			continue
+
+		# 이미 처리된 건물이면 skip
+		if building in processed_buildings:
+			continue
+
+		processed_buildings.append(building)
+
+		# 건물 데이터 추출
+		if building.data:
+			buildings_data.append({
+				"type": building.data.entity_name,
+				"grid_pos": {"x": building.grid_position.x, "y": building.grid_position.y}
+			})
+
+	return {"buildings": buildings_data}
+
+
+## 직렬화된 데이터로 건물 복원 (로드용)
+##
+## @param data: serialize()가 반환한 형태의 Dictionary
+func deserialize(data: Dictionary) -> void:
+	# 기존 동적 생성된 건물만 제거 (grid_buildings에서 null이 아닌 것들)
+	var buildings_to_remove: Array = []
+	for grid_pos in grid_buildings.keys():
+		var building = grid_buildings[grid_pos]
+		if building != null and building not in buildings_to_remove:
+			buildings_to_remove.append(building)
+
+	for building in buildings_to_remove:
+		building.queue_free()
+
+	# 동적 생성된 건물 키만 제거 (기존 타일 동기화된 것은 유지)
+	var keys_to_remove: Array = []
+	for grid_pos in grid_buildings.keys():
+		if grid_buildings[grid_pos] != null:
+			keys_to_remove.append(grid_pos)
+
+	for key in keys_to_remove:
+		grid_buildings.erase(key)
+
+	# 새 건물 복원
+	var buildings_data = data.get("buildings", [])
+
+	for building_info in buildings_data:
+		var type_name: String = building_info.get("type", "")
+		var pos_data = building_info.get("grid_pos", {})
+		var grid_pos = Vector2i(pos_data.get("x", 0), pos_data.get("y", 0))
+
+		# BuildingDatabase에서 BuildingData 조회
+		var building_data = BuildingDatabase.get_building(type_name)
+		if building_data:
+			# Navigation bake 건너뜀 (마지막에 한 번만 실행)
+			create_building(grid_pos, building_data, true)
+		else:
+			push_warning("[BuildingManager] 알 수 없는 건물 타입: ", type_name)
+
+	# 모든 건물 복원 후 Navigation 한 번만 bake
+	_bake_navigation_async()
+
+	print("[BuildingManager] 건물 복원 완료: %d개" % buildings_data.size())
 
 
 # ============================================================

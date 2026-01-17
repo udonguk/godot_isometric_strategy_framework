@@ -23,6 +23,7 @@ SelectionManager="*res://scripts/managers/selection_manager.gd"
 InputManager="*res://scripts/managers/input_manager.gd"
 BuildingDatabase="*res://scripts/config/building_database.gd"
 BuildingManager="*res://scripts/managers/building_manager.gd"
+SaveManager="*res://scripts/managers/save_manager.gd"
 
 [display]
 
@@ -31,10 +32,6 @@ window/size/viewport_height=360
 window/size/window_width_override=1920
 window/size/window_height_override=1080
 window/stretch/mode="viewport"
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 
 [layer_names]
 

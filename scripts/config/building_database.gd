@@ -16,6 +16,14 @@ func get_building_by_id(id: String) -> BuildingData:
 			return building
 	return null
 
+
+# 이름으로 건물 찾기 (저장/로드용)
+func get_building(name: String) -> BuildingData:
+	for building in BUILDINGS:
+		if building.entity_name == name:
+			return building
+	return null
+
 # 카테고리별 건물 목록
 func get_buildings_by_category(category: BuildingData.BuildingCategory) -> Array[BuildingData]:
 	var result: Array[BuildingData] = []

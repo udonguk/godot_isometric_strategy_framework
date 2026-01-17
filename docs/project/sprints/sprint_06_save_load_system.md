@@ -10,7 +10,7 @@ FileAccess + JSON 기반의 게임 상태 저장/로드 시스템을 구현합�
 - SaveManager Autoload 싱글톤 구현
 - 건물/유닛/카메라 상태 직렬화
 - 여러 슬롯 지원 (slot_1 ~ slot_3 + autosave)
-- 빠른 저장/로드 (F5/F9) 및 자동 저장
+- UI 버튼을 통한 저장/로드 및 자동 저장
 
 ### 저장 데이터 구조 (JSON)
 ```json
@@ -32,10 +32,10 @@ FileAccess + JSON 기반의 게임 상태 저장/로드 시스템을 구현합�
 
 ### Phase 1: SaveManager 기본 구조 + JSON 저장/로드 테스트
 
-#### Task 1.1: SaveManager Autoload 생성
-- [ ] `scripts/managers/save_manager.gd` 생성
-- [ ] `project.godot`에 Autoload 등록
-- [ ] 기본 구조 작성:
+#### Task 1.1: SaveManager Autoload 생성 ✅ 완료
+- [x] `scripts/managers/save_manager.gd` 생성
+- [x] `project.godot`에 Autoload 등록
+- [x] 기본 구조 작성:
   - `SAVE_DIR = "user://saves/"`
   - `SAVE_EXTENSION = ".save"`
   - `VERSION = "1.0.0"`
@@ -70,10 +70,12 @@ signal save_failed(reason: String)
 signal load_failed(reason: String)
 ```
 
-#### Task 1.2: 저장 디렉토리 관리
-- [ ] `_ensure_save_directory()` 구현
-- [ ] `get_save_path(slot: int)` 구현
-- [ ] `get_autosave_path()` 구현
+#### Task 1.2: 저장 디렉토리 관리 ✅ 완료
+- [x] `_ensure_save_directory()` 구현
+- [x] `get_save_path(slot: int)` 구현
+- [x] `get_autosave_path()` 구현
+- [x] `has_save(slot: int)` 구현 (추가)
+- [x] `has_autosave()` 구현 (추가)
 
 ```gdscript
 ## 저장 디렉토리가 존재하는지 확인하고, 없으면 생성
@@ -91,10 +93,10 @@ func get_autosave_path() -> String:
     return SAVE_DIR + "autosave" + SAVE_EXTENSION
 ```
 
-#### Task 1.3: 기본 JSON 저장/로드 테스트
-- [ ] `_save_json(path: String, data: Dictionary)` 구현
-- [ ] `_load_json(path: String) -> Dictionary` 구현
-- [ ] 테스트: 간단한 Dictionary 저장/로드 검증
+#### Task 1.3: 기본 JSON 저장/로드 테스트 ✅ 완료
+- [x] `_save_json(path: String, data: Dictionary)` 구현
+- [x] `_load_json(path: String) -> Dictionary` 구현
+- [ ] 테스트: 간단한 Dictionary 저장/로드 검증 (Task 1.4에서 진행)
 
 ```gdscript
 ## JSON 데이터를 파일로 저장
@@ -142,12 +144,12 @@ func _load_json(path: String) -> Dictionary:
 
 ---
 
-### Phase 2: 게임 상태 직렬화 (Serialization)
+### Phase 2: 게임 상태 직렬화 (Serialization) ✅ 완료
 
-#### Task 2.1: BuildingManager.serialize() 구현
-- [ ] `BuildingManager`에 `serialize() -> Dictionary` 메서드 추가
-- [ ] `BuildingManager`에 `deserialize(data: Dictionary)` 메서드 추가
-- [ ] 저장할 데이터:
+#### Task 2.1: BuildingManager.serialize() 구현 ✅ 완료
+- [x] `BuildingManager`에 `serialize() -> Dictionary` 메서드 추가
+- [x] `BuildingManager`에 `deserialize(data: Dictionary)` 메서드 추가
+- [x] 저장할 데이터:
   - `building_type` (BuildingData 이름)
   - `grid_pos` (Vector2i → {x, y})
 
@@ -206,9 +208,10 @@ func deserialize(data: Dictionary) -> void:
     print("[BuildingManager] 건물 복원 완료: %d개" % buildings_data.size())
 ```
 
-#### Task 2.2: 유닛 직렬화 구현
-- [ ] `SaveManager`에서 유닛 그룹("units")으로 유닛 수집
-- [ ] 저장할 데이터:
+#### Task 2.2: 유닛 직렬화 구현 ✅ 완료
+- [x] `SaveManager`에서 유닛 그룹("units")으로 유닛 수집
+- [x] `UnitEntity._ready()`에 `add_to_group("units")` 추가
+- [x] 저장할 데이터:
   - `grid_pos` (Vector2i → {x, y})
   - `direction` (Direction enum → int)
   - `state` (State enum → int)
@@ -261,9 +264,9 @@ func _deserialize_units(units_data: Array, parent_node: Node2D) -> void:
     print("[SaveManager] 유닛 복원 완료: %d개" % units_data.size())
 ```
 
-#### Task 2.3: 카메라 상태 직렬화
-- [ ] 카메라 위치 저장/복원
-- [ ] 저장할 데이터:
+#### Task 2.3: 카메라 상태 직렬화 ✅ 완료
+- [x] 카메라 위치 저장/복원
+- [x] 저장할 데이터:
   - `position` (Vector2 → {x, y})
   - `zoom` (Vector2 → {x, y})
 
@@ -292,10 +295,10 @@ func _deserialize_camera(camera_data: Dictionary) -> void:
         print("[SaveManager] 카메라 복원 완료")
 ```
 
-#### Task 2.4: 통합 저장/로드 메서드
-- [ ] `save_game(slot: int)` 구현
-- [ ] `load_game(slot: int)` 구현
-- [ ] 유닛 부모 노드 참조 관리
+#### Task 2.4: 통합 저장/로드 메서드 ✅ 완료
+- [x] `save_game(slot: int)` 구현
+- [x] `load_game(slot: int)` 구현
+- [x] `initialize(unit_parent: Node2D)` 구현 - 유닛 부모 노드 참조 관리
 
 ```gdscript
 # ============================================================
@@ -372,12 +375,12 @@ func load_game(slot: int) -> bool:
 
 ---
 
-### Phase 3: 슬롯 시스템 + 메타데이터
+### Phase 3: 슬롯 시스템 + 메타데이터 ✅ 완료
 
-#### Task 3.1: 저장 슬롯 정보 조회
-- [ ] `get_save_info(slot: int) -> Dictionary` 구현
-- [ ] `get_all_saves_info() -> Array` 구현
-- [ ] 반환 데이터: 타임스탬프, 버전, 건물/유닛 수
+#### Task 3.1: 저장 슬롯 정보 조회 ✅ 완료
+- [x] `get_save_info(slot: int) -> Dictionary` 구현
+- [x] `get_all_saves_info() -> Array` 구현
+- [x] 반환 데이터: 타임스탬프, 버전, 건물/유닛 수
 
 ```gdscript
 ## 슬롯의 저장 정보 조회 (메타데이터만)
@@ -428,9 +431,10 @@ func get_all_saves_info() -> Array:
     return infos
 ```
 
-#### Task 3.2: 저장 파일 삭제
-- [ ] `delete_save(slot: int)` 구현
-- [ ] 삭제 확인 시그널
+#### Task 3.2: 저장 파일 삭제 ✅ 완료
+- [x] `delete_save(slot: int)` 구현
+- [x] `delete_autosave()` 구현 (추가)
+- [x] `save_deleted` 시그널 추가
 
 ```gdscript
 signal save_deleted(slot: int)
@@ -453,8 +457,9 @@ func delete_save(slot: int) -> bool:
         return false
 ```
 
-#### Task 3.3: 저장 슬롯 존재 여부 확인
-- [ ] `has_save(slot: int) -> bool` 구현
+#### Task 3.3: 저장 슬롯 존재 여부 확인 ✅ 완료 (Task 1.2에서 구현)
+- [x] `has_save(slot: int) -> bool` 구현
+- [x] `has_autosave() -> bool` 구현
 
 ```gdscript
 ## 슬롯에 저장 파일이 있는지 확인
@@ -469,43 +474,40 @@ func has_autosave() -> bool:
 
 ---
 
-### Phase 4: 빠른 저장/로드 + 자동 저장
+### Phase 4: 빠른 저장/로드 + 자동 저장 ✅ 완료
 
-#### Task 4.1: 빠른 저장/로드 (F5/F9)
-- [ ] Input Actions 등록 (`project.godot`)
-  - `quick_save` → F5
-  - `quick_load` → F9
-- [ ] `InputManager`에서 처리 또는 `SaveManager._input()` 구현
+#### Task 4.1: 빠른 저장/로드 (UI 버튼) ✅ 완료
+- [x] ConstructionMenu에 저장/로드 버튼 추가 (`scenes/ui/construction_menu.tscn`)
+- [x] 버튼 클릭 핸들러 구현 (`scripts/ui/construction_menu.gd`)
+
+> ⚠️ **변경 사항**: 키보드 단축키(F5/F9)는 Godot 에디터 단축키와 충돌하여 UI 버튼 방식으로 변경
 
 ```gdscript
-# save_manager.gd에 추가
+# construction_menu.gd에 추가
 
-## 빠른 저장 슬롯 (기본값: 1)
-var quick_save_slot: int = 1
+@onready var save_button: Button = $CollapsedBar/SaveButton
+@onready var load_button: Button = $CollapsedBar/LoadButton
 
-func _input(event: InputEvent) -> void:
-    if event.is_action_pressed("quick_save"):
-        quick_save()
-    elif event.is_action_pressed("quick_load"):
-        quick_load()
+func _ready():
+    # ...
+    save_button.pressed.connect(_on_save_button_pressed)
+    load_button.pressed.connect(_on_load_button_pressed)
 
+## 저장 버튼 클릭 시 호출
+func _on_save_button_pressed() -> void:
+    SaveManager.quick_save()
 
-## 빠른 저장 (F5)
-func quick_save() -> void:
-    print("[SaveManager] 빠른 저장 시작...")
-    save_game(quick_save_slot)
-
-
-## 빠른 로드 (F9)
-func quick_load() -> void:
-    print("[SaveManager] 빠른 로드 시작...")
-    load_game(quick_save_slot)
+## 로드 버튼 클릭 시 호출
+func _on_load_button_pressed() -> void:
+    SaveManager.quick_load()
 ```
 
-#### Task 4.2: 자동 저장 시스템
-- [ ] `Timer` 노드 추가 (Autoload에서 생성)
-- [ ] 자동 저장 간격 설정 (GameConfig 또는 상수)
-- [ ] `autosave()` 구현
+#### Task 4.2: 자동 저장 시스템 ✅ 완료
+- [x] `Timer` 노드 추가 (`_setup_autosave_timer()`)
+- [x] 자동 저장 간격 설정 (`AUTOSAVE_INTERVAL = 600초`)
+- [x] `autosave()` 구현
+- [x] `load_autosave()` 구현
+- [x] `set_autosave_enabled()` 구현
 
 ```gdscript
 # ============================================================
@@ -597,18 +599,18 @@ func load_autosave() -> bool:
     return true
 ```
 
-#### Task 4.3: 메인 씬 통합
-- [ ] `main.gd`에서 `SaveManager.initialize()` 호출
-- [ ] 유닛 부모 노드 전달
+#### Task 4.3: 맵 씬 통합 ✅ 완료
+- [x] `test_map.gd`에서 `SaveManager.initialize()` 호출
+- [x] 유닛 부모 노드 전달
 
 ```gdscript
-# main.gd에 추가
+# scripts/maps/test_map.gd에 추가
 
-func _ready():
+func _initialize_systems() -> void:
     # ... 기존 초기화 코드 ...
 
-    # SaveManager 초기화
-    SaveManager.initialize($Entities)  # 유닛 생성할 부모 노드
+    # 6단계: SaveManager 초기화 (유닛 부모 노드 전달)
+    SaveManager.initialize(entities_container)
 ```
 
 ---
@@ -635,8 +637,8 @@ func _ready():
 - [ ] 슬롯 1, 2, 3에 각각 저장 가능
 
 ### Phase 4 테스트
-- [ ] F5 키 → 빠른 저장 동작
-- [ ] F9 키 → 빠른 로드 동작
+- [x] 저장 버튼 클릭 → 빠른 저장 동작
+- [x] 로드 버튼 클릭 → 빠른 로드 동작
 - [ ] 10분 후 자동 저장 동작 (테스트 시 간격 줄여서 확인)
 - [ ] `set_autosave_enabled(false)` → 자동 저장 중지
 
@@ -646,12 +648,15 @@ func _ready():
 
 ### 새로 생성
 - `scripts/managers/save_manager.gd` - SaveManager Autoload
-- `tests/unit/test_save_manager.gd` - 단위 테스트
 
 ### 수정
-- `project.godot` - Autoload 등록, Input Actions 추가
-- `scripts/managers/building_manager.gd` - serialize/deserialize 추가
-- `scripts/maps/main.gd` - SaveManager 초기화 호출
+- `project.godot` - SaveManager Autoload 등록
+- `scripts/managers/building_manager.gd` - serialize/deserialize, Navigation baking 동기화 추가
+- `scripts/config/building_database.gd` - get_building() 함수 추가
+- `scripts/entity/unit_entity.gd` - "units" 그룹 추가
+- `scripts/maps/test_map.gd` - SaveManager 초기화 호출
+- `scripts/ui/construction_menu.gd` - 저장/로드 버튼 핸들러 추가
+- `scenes/ui/construction_menu.tscn` - 저장/로드 버튼 UI 추가
 
 ---
 
