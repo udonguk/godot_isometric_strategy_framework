@@ -24,6 +24,14 @@ enum ClickPriority {
 
 
 # ============================================================
+# 건설 모드 상태 (전역)
+# ============================================================
+
+## 건설 모드 활성화 여부 (BuildingManager가 설정)
+var is_construction_mode_active: bool = false
+
+
+# ============================================================
 # 입력 처리
 # ============================================================
 
@@ -40,6 +48,11 @@ func _unhandled_input(event: InputEvent) -> void:
 func _handle_left_click() -> void:
 	var mouse_pos = get_viewport().get_mouse_position()
 	print("[InputManager] 좌클릭 - 마우스 위치: ", mouse_pos)
+
+	# ⭐ 건설 모드 확인: 건설 모드면 InputManager가 처리하지 않고 통과
+	if is_construction_mode_active:
+		print("[InputManager] 건설 모드 활성 - 입력 통과")
+		return
 
 	# 우선순위 순서대로 검사: 유닛 > 건물 > 빈 공간
 

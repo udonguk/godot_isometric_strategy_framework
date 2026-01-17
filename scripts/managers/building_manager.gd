@@ -57,6 +57,17 @@ var navigation_region: NavigationRegion2D = null
 
 
 # ============================================================
+# 건설 모드 상태
+# ============================================================
+
+## 건설 모드 활성화 여부
+var is_placement_mode: bool = false
+
+## 선택된 건물 데이터 (건설 모드 중 배치할 건물)
+var selected_building_data: BuildingData = null
+
+
+# ============================================================
 # 초기화
 # ============================================================
 
@@ -204,6 +215,83 @@ func create_buildings(grid_positions: Array[Vector2i]) -> Array:
 
 	print("[BuildingManager] 총 ", created_buildings.size(), "개 건물 생성 완료")
 	return created_buildings
+
+
+# ============================================================
+# 건설 모드 (UI 연동)
+# ============================================================
+
+## 건설 모드 시작 (UI에서 건물 버튼 클릭 시 호출)
+##
+## @param building_data: 배치할 건물 데이터
+func start_building_placement(building_data: BuildingData) -> void:
+	if not building_data:
+		push_error("[BuildingManager] 건물 데이터가 없습니다")
+		return
+
+	is_placement_mode = true
+	selected_building_data = building_data
+
+	# ⭐ InputManager에 건설 모드 활성화 알림
+	InputManager.is_construction_mode_active = true
+
+	building_placement_started.emit(building_data)
+	print("[BuildingManager] 건설 모드 시작: ", building_data.entity_name)
+
+
+## 건설 모드 취소 (ESC 키 또는 UI에서 취소 버튼 클릭 시 호출)
+func cancel_building_placement() -> void:
+	if not is_placement_mode:
+		return
+
+	is_placement_mode = false
+	selected_building_data = null
+
+	# ⭐ InputManager에 건설 모드 비활성화 알림
+	InputManager.is_construction_mode_active = false
+
+	building_placement_failed.emit("건설이 취소되었습니다")
+	print("[BuildingManager] 건설 모드 취소")
+
+
+## 건물 배치 시도 (건설 모드 중 맵 클릭 시 호출)
+##
+## @param grid_pos: 배치할 그리드 좌표
+## @return: 배치 성공 여부
+func try_place_building(grid_pos: Vector2i) -> bool:
+	# 1. 건설 모드 확인
+	if not is_placement_mode or selected_building_data == null:
+		return false
+
+	# 2. 건설 가능 여부 검증
+	var result = can_build_at(selected_building_data, grid_pos)
+	if not result.success:
+		building_placement_failed.emit(result.reason)
+		return false
+
+	# 3. 건물 생성
+	var building = create_building(grid_pos, selected_building_data)
+	if building:
+		# 4. 건설 모드 종료
+		is_placement_mode = false
+		selected_building_data = null
+
+		# ⭐ InputManager에 건설 모드 비활성화 알림
+		InputManager.is_construction_mode_active = false
+
+		return true
+
+	return false
+
+
+## 건설 모드 활성화 여부 확인
+func is_in_placement_mode() -> bool:
+	return is_placement_mode
+
+
+## 현재 선택된 건물 데이터 가져오기
+func get_selected_building_data() -> BuildingData:
+	return selected_building_data
 
 
 # ============================================================

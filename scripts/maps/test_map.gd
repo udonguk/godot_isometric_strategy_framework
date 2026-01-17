@@ -11,8 +11,8 @@ extends Node2D
 # GridSystem은 Autoload 싱글톤이므로 preload 불필요 (이름 충돌 방지)
 # const GridSystem = preload("res://scripts/map/grid_system.gd")
 
-## BuildingManager 스크립트 참조
-const BuildingManager = preload("res://scripts/managers/building_manager.gd")
+## BuildingManager는 Autoload 싱글톤이므로 preload 불필요
+# const BuildingManager = preload(...) → BuildingManager Autoload 직접 사용
 
 ## UnitEntity 씬 참조 (테스트용)
 const UnitEntityScene = preload("res://scenes/entitys/unit_entity.tscn")
@@ -39,11 +39,8 @@ const UnitEntityScene = preload("res://scenes/entitys/unit_entity.tscn")
 
 
 # ============================================================
-# 매니저 인스턴스
+# 테스트 데이터
 # ============================================================
-
-## BuildingManager 인스턴스
-var building_manager: BuildingManager = null
 
 ## 테스트 유닛 배열
 var test_units: Array = []
@@ -60,6 +57,17 @@ func _ready() -> void:
 	# main 그룹 등록 (건물에서 이벤트를 전달받기 위해)
 	add_to_group("main")
 
+
+## 맵 비동기 초기화 (외부에서 await로 호출)
+##
+## _ready()에서 직접 await를 사용하면 ready 신호가 await 이전에 발생하여
+## 외부에서 초기화 완료 시점을 알 수 없습니다.
+## 따라서 비동기 초기화는 별도 함수로 분리하고, main.gd에서 직접 await합니다.
+##
+## @example
+##   # main.gd
+##   await test_map.initialize_async()
+func initialize_async() -> void:
 	print("[TestMap] 테스트 맵 초기화")
 
 	# 노드 참조 확인
@@ -114,10 +122,8 @@ func _initialize_systems() -> void:
 	# 3단계: Navigation Map 캐싱 (경로 찾기에 필요)
 	GridSystem.cache_navigation_map()
 
-	# 4단계: BuildingManager 초기화 (GridSystem 의존, NavigationRegion2D 전달)
-	building_manager = BuildingManager.new()
-	add_child(building_manager)
-	building_manager.initialize(entities_container, null, navigation_region)
+	# 4단계: BuildingManager 초기화 (Autoload이므로 initialize만 호출)
+	BuildingManager.initialize(entities_container, null, navigation_region)
 
 
 ## NavigationRegion2D가 NavigationServer2D에 완전히 등록될 때까지 대기합니다.
@@ -135,6 +141,33 @@ func _wait_for_navigation_registration() -> void:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	await get_tree().physics_frame
+
+
+# ============================================================
+# 입력 처리 (건설 모드)
+# ============================================================
+
+## 입력 이벤트 처리 (건설 모드 중 맵 클릭)
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			_handle_map_click(event.position)
+
+
+## 맵 클릭 처리 (건설 모드 중 건물 배치)
+func _handle_map_click(screen_pos: Vector2) -> void:
+	# 건설 모드가 아니면 무시 (BuildingManager는 Autoload)
+	if not BuildingManager.is_in_placement_mode():
+		return
+
+	# 화면 좌표 → 월드 좌표 → 그리드 좌표 변환
+	var world_pos = get_global_mouse_position()
+	var grid_pos = GridSystem.world_to_grid(world_pos)
+
+	# 건물 배치 시도
+	if BuildingManager.try_place_building(grid_pos):
+		print("[TestMap] 건물 배치 성공: ", grid_pos)
+		get_viewport().set_input_as_handled()
 
 
 # ============================================================
@@ -170,10 +203,20 @@ func _test_resource_based_buildings() -> void:
 	print("Resource 기반 건물 생성 테스트 시작")
 	print("========================================\n")
 
+	print("[TestMap] BuildingDatabase 확인: ", BuildingDatabase)
+
 	# BuildingDatabase에서 건물 데이터 로드
+	print("[TestMap] house_01 데이터 요청 중...")
 	var house_data = BuildingDatabase.get_building_by_id("house_01")
+	print("[TestMap] house_01 데이터 결과: ", house_data)
+
+	print("[TestMap] farm_01 데이터 요청 중...")
 	var farm_data = BuildingDatabase.get_building_by_id("farm_01")
+	print("[TestMap] farm_01 데이터 결과: ", farm_data)
+
+	print("[TestMap] shop_01 데이터 요청 중...")
 	var shop_data = BuildingDatabase.get_building_by_id("shop_01")
+	print("[TestMap] shop_01 데이터 결과: ", shop_data)
 
 	# 데이터 로드 확인
 	if house_data:
@@ -203,7 +246,7 @@ func _test_resource_based_buildings() -> void:
 		var data = building_info["data"]
 
 		if data:
-			var building = building_manager.create_building(grid_pos, data)
+			var building = BuildingManager.create_building(grid_pos, data)
 			if building:
 				print("[TestMap] ✅ 건물 생성 성공: ", data.entity_name, " at ", grid_pos)
 			else:

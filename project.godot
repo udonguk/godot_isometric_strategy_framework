@@ -21,6 +21,8 @@ GameConfig="*res://scripts/config/game_config.gd"
 GridSystem="*res://scripts/map/grid_system.gd"
 SelectionManager="*res://scripts/managers/selection_manager.gd"
 InputManager="*res://scripts/managers/input_manager.gd"
+BuildingDatabase="*res://scripts/config/building_database.gd"
+BuildingManager="*res://scripts/managers/building_manager.gd"
 
 [display]
 
