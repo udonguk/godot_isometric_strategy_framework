@@ -115,22 +115,18 @@ func set_building_preview(preview: BuildingPreview) -> void:
 
 ## 기존 StructuresTileMapLayer의 건물을 grid_buildings에 동기화
 ##
-## TileMapLayer에 이미 배치된 건물 타일들을 grid_buildings Dictionary에 등록합니다.
+## GridSystem을 통해 structures_layer의 점유 셀을 조회하여
+## grid_buildings Dictionary에 등록합니다.
 ## 이를 통해 can_build_at()에서 기존 건물 위치도 검증할 수 있습니다.
 ##
-## @param structures_layer: StructuresTileMapLayer 참조
-##
-## 💡 설계 의도:
+## 💡 설계 의도 (Dependency Inversion):
+## - TileMapLayer를 직접 참조하지 않고 GridSystem을 통해 추상화
 ## - grid_buildings에 null 값으로 등록하여 "점유됨" 상태만 표시
 ## - has_building()은 키 존재 여부만 체크하므로 기존 로직 그대로 동작
 ## - get_building()은 null을 반환할 수 있음 (기존 타일은 BuildingEntity가 아님)
-func sync_existing_structures(structures_layer: TileMapLayer) -> void:
-	if not structures_layer:
-		push_warning("[BuildingManager] structures_layer가 null입니다")
-		return
-
-	# TileMapLayer의 사용된 모든 셀 가져오기
-	var used_cells: Array[Vector2i] = structures_layer.get_used_cells()
+func sync_existing_structures() -> void:
+	# GridSystem을 통해 점유된 셀 조회 (Dependency Inversion 준수)
+	var used_cells: Array[Vector2i] = grid_system_ref.get_structure_occupied_cells()
 
 	var synced_count: int = 0
 	for cell_pos in used_cells:

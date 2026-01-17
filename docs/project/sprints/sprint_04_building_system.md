@@ -120,7 +120,7 @@ signal building_placement_failed(reason: String)
   - `try_place_building()`: 배치 성공 시 미리보기 숨김
   - BuildingPreview 인스턴스 참조 추가
 
-- [ ] **3.3.4. 통합 테스트**
+- [x] **3.3.4. 통합 테스트**
   - 건설 모드 진입 시 미리보기 표시 확인
   - 마우스 이동 시 그리드 스냅 확인
   - 건설 가능/불가 위치에서 색상 변경 확인

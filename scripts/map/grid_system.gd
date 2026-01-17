@@ -17,6 +17,10 @@ class_name GridSystemNode
 ## 모든 entity는 ground 타일을 기준으로 배치됨
 var ground_layer: TileMapLayer = null
 
+## 구조물 TileMapLayer 참조
+## 기존 건물/구조물 타일이 배치된 레이어
+var structures_layer: TileMapLayer = null
+
 ## Navigation Map RID (캐시)
 ## NavigationServer2D 쿼리에 사용
 var cached_navigation_map: RID
@@ -37,9 +41,15 @@ var obstacles: Dictionary = {}
 
 ## GridSystem 초기화
 ## 게임 시작 시 test_map.gd에서 호출해야 함
-func initialize(tile_layer: TileMapLayer) -> void:
+##
+## @param tile_layer: 그라운드 TileMapLayer (필수)
+## @param struct_layer: 구조물 TileMapLayer (선택)
+func initialize(tile_layer: TileMapLayer, struct_layer: TileMapLayer = null) -> void:
 	ground_layer = tile_layer
+	structures_layer = struct_layer
 	print("[GridSystem] 초기화 완료 - Ground Layer: ", tile_layer.name)
+	if struct_layer:
+		print("[GridSystem] Structures Layer: ", struct_layer.name)
 	print("[GridSystem] TileSet: ", tile_layer.tile_set)
 
 
@@ -101,6 +111,22 @@ func world_to_grid(world_pos: Vector2) -> Vector2i:
 
 	var local_pos: Vector2 = ground_layer.to_local(world_pos)
 	return ground_layer.local_to_map(local_pos)
+
+
+# ============================================================
+# 구조물 레이어 조회
+# ============================================================
+
+## 구조물 TileMapLayer의 점유된 셀 좌표 반환
+##
+## BuildingManager.sync_existing_structures()에서 사용
+## TileMapLayer 직접 참조를 피하기 위한 추상화 레이어
+##
+## @return: 점유된 그리드 좌표 배열 (structures_layer가 없으면 빈 배열)
+func get_structure_occupied_cells() -> Array[Vector2i]:
+	if not structures_layer:
+		return []
+	return structures_layer.get_used_cells()
 
 
 # ============================================================

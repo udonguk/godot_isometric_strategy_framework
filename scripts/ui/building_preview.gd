@@ -43,6 +43,9 @@ var current_building_data: BuildingData = null
 ## 현재 마우스가 위치한 그리드 좌표
 var current_grid_pos: Vector2i = Vector2i.ZERO
 
+## 이전 프레임의 그리드 좌표 (변경 감지용)
+var _last_grid_pos: Vector2i = Vector2i(-999, -999)
+
 ## 미리보기 활성화 여부
 var is_active: bool = false
 
@@ -64,8 +67,10 @@ func _process(_delta: float) -> void:
 	# 마우스 위치 추적 + 그리드 스냅
 	_update_position()
 
-	# 건설 가능 여부에 따른 색상 업데이트
-	_update_validity_color()
+	# 그리드 위치가 변경된 경우에만 색상 업데이트 (성능 최적화)
+	if current_grid_pos != _last_grid_pos:
+		_update_validity_color()
+		_last_grid_pos = current_grid_pos
 
 
 # ============================================================
@@ -98,6 +103,7 @@ func hide_preview() -> void:
 	is_active = false
 	visible = false
 	current_building_data = null
+	_last_grid_pos = Vector2i(-999, -999)
 
 	print("[BuildingPreview] 미리보기 종료")
 
@@ -128,7 +134,7 @@ func _update_position() -> void:
 ## 디버그: 현재 등록된 모든 건물 좌표 출력 (스페이스바로 호출)
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_SPACE:
-		var all_buildings: Array = BuildingManager.grid_buildings.keys()
+		var all_buildings: Array[Vector2i] = BuildingManager.grid_buildings.keys()
 		print("[BuildingPreview] === 등록된 건물 좌표 ===")
 		print("[BuildingPreview] 현재 미리보기 Grid: %s" % current_grid_pos)
 		print("[BuildingPreview] 등록된 모든 좌표: %s" % [all_buildings])
@@ -196,9 +202,9 @@ func _update_grid_overlay(grid_size: Vector2i) -> void:
 	grid_overlay.polygon = PackedVector2Array()
 
 	# 각 타일별로 개별 Polygon2D 생성
-	for x in range(grid_size.x):
-		for y in range(grid_size.y):
-			var tile_overlay = Polygon2D.new()
+	for x: int in range(grid_size.x):
+		for y: int in range(grid_size.y):
+			var tile_overlay: Polygon2D = Polygon2D.new()
 			tile_overlay.polygon = single_tile_polygon
 
 			# GridSystem 공통 함수로 화면 오프셋 계산
@@ -217,14 +223,14 @@ func _update_tile_overlay_colors() -> void:
 
 	var grid_size: Vector2i = current_building_data.grid_size
 
-	for x in range(grid_size.x):
-		for y in range(grid_size.y):
-			var tile_name = "Tile_%d_%d" % [x, y]
-			var tile_overlay = grid_overlay.get_node_or_null(tile_name)
+	for x: int in range(grid_size.x):
+		for y: int in range(grid_size.y):
+			var tile_name: String = "Tile_%d_%d" % [x, y]
+			var tile_overlay: Polygon2D = grid_overlay.get_node_or_null(tile_name)
 			if tile_overlay:
-				var check_pos = current_grid_pos + Vector2i(x, y)
-				var is_occupied = BuildingManager.has_building(check_pos)
-				var is_valid = GridSystem.is_valid_position(check_pos)
+				var check_pos: Vector2i = current_grid_pos + Vector2i(x, y)
+				var is_occupied: bool = BuildingManager.has_building(check_pos)
+				var is_valid: bool = GridSystem.is_valid_position(check_pos)
 
 				if not is_valid or is_occupied:
 					tile_overlay.color = COLOR_OVERLAY_INVALID

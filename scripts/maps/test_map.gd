@@ -116,8 +116,8 @@ func _validate_node_references() -> bool:
 ##
 ## ⚠️ 주의: 이 순서를 변경하면 Navigation 시스템이 정상 작동하지 않습니다!
 func _initialize_systems() -> void:
-	# 1단계: GridSystem에 TileMapLayer 등록
-	GridSystem.initialize(ground_layer)
+	# 1단계: GridSystem에 TileMapLayer 등록 (ground + structures)
+	GridSystem.initialize(ground_layer, structures_layer)
 
 	# 2단계: NavigationServer2D 등록 완료 대기
 	await _wait_for_navigation_registration()
@@ -128,8 +128,8 @@ func _initialize_systems() -> void:
 	# 4단계: BuildingManager 초기화 (Autoload이므로 initialize만 호출)
 	BuildingManager.initialize(entities_container, null, navigation_region)
 
-	# 5단계: 기존 건물 동기화 (StructuresTileMapLayer의 건물을 Dictionary에 등록)
-	BuildingManager.sync_existing_structures(structures_layer)
+	# 5단계: 기존 건물 동기화 (GridSystem을 통해 structures_layer 조회)
+	BuildingManager.sync_existing_structures()
 
 	# 6단계: 건설 미리보기 설정
 	_setup_building_preview()
